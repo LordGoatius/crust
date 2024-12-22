@@ -26,7 +26,7 @@ fn print_tree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
             }
             print!("{:?}", br.open().text(&ctx));
             println!();
-            print_subtree(br.contents(), ctx, val + 1);
+            print_tree(br.contents(), ctx, val + 1);
 
             for _ in 0..val {
                 print!("\t");
