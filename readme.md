@@ -33,7 +33,7 @@ tuple = (-12, 14);
 // This is both for simplicity and because the constructs that make
 // the arrow better for rust (dyn, generics, etc) do not exist in 
 // this language. Is that better? No, but that's not the point.
-fn thing() -> int_option {
+int_option thing() {
     u32 my_var;
     my_var = 14;
     int_option my_opt = none;
