@@ -3,8 +3,8 @@ translation-unit = declaration*
 
 declaration = function-declaration
             | function-definition
-            | static-variable-declaration
             | type-definiton 
+            | static-variable-declaration
             ;
 
 type-specifier = "u8"
@@ -30,6 +30,7 @@ type-specifier = "u8"
                | "enum", ident,
                | "union", ident,
                | tuple-def
+               | user-type (* pretty sure this is context dependent *)
                | type-specifier, "*", (* NOTE: ptrs :) *)
                ;
 
@@ -38,9 +39,9 @@ tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
 
 type-qualifier = "static" ;
 
-type-definition = (( "struct", ident, "{", { ident, { type-specifier | user-type }, ";", }, "}" ) 
-                 | ( "union",  ident, "{", { ident, { type-specifier | user-type }, ";", }, "}" )
-                 | ( "enum",   ident, "{", { ident, [ type-specifier | user-type ], ";", }, "}" ), ), ";" ;
+type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" ) 
+                 | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
+                 | ( "enum",   ident, "{", { ident, type-specifier, ";" }, "}" )), ";" ;
 
 
 type-instantiation = ( expression
@@ -56,14 +57,15 @@ expression = ( binary-op
       | unary-op
       | ident
       | function-call
-      | conditional   (* conditionals are binops *)
+      | conditional   (* conditionals are binops or unops *)
       | literal       (* number literal *)
       | "(", expression, ")"),;
 
 binary-op = expression, op, expression ;
-conditional = binary-op ; (* this is true, just only with logical operators.
-                             nevertheless, for the parser, this is okay, everything 
-                             else will be handled in the type checker *)
+conditional = binary-op | unary-op ; (* this is true, just only with logical operators.
+                                        nevertheless, for the parser, this is okay, everything 
+                                        else will be handled in the type checker *)
+
 unary-op  = op, ( ident | literal ) 
           | op, "(", expression, ")" ;
 function-call = ident, "(", [ ident ], { ",", ident }, ")" ;
@@ -79,3 +81,47 @@ variable-declaration =
 
 static-variable-declaration = "static", variable-declaration ;
 
+function-definition = 
+    type-specifier, ident, "(", [ type-specifier, ident ], { ",", type-specifier, ident }, ")", ";" ;
+
+type-definition = "typedef", type-specifier, ident, ";" ;
+
+code-block-body = statement* ;
+
+function-definition = code-block-body ;
+
+statement = variable-declaration
+          | variable-assignment
+          | shortcut-assignment
+          | if-statement
+          | while-statement
+          | for-statement
+          | return-statement
+          | match-statement
+          | if-let-statement ;
+
+variable-assignment = ident, "=", expression, ";" ;
+shortcut-assignment = ident, ( "+=",
+                               "-=",
+                               "*=",
+                               "\=",
+                               "%=",
+                               ">>=",
+                               "<<=",
+                               "&=",
+                               "|=",
+                               "^=" ), expression, ";" ;
+
+if-statement = "if", "(", expression, ")", "{", code-block-body, "}",
+     { "else", "if", "(", expression, ")", "{", code-block-body, "}" },
+     [ "else", "{", code-block-body, "}" ] ;
+
+while-statement = "while", "(", expression, ")", "{", code-block-body, "}" ;
+for-statement   = "for", "(", [ variable-assignment ], ";", 
+                              [ expression ],  ";", 
+                              [ expression ], ")", "{", code-block-body, "}" ;
+return-statement = "return", expression, ";" ;
+match-statement  = "match", expression, "{", { match-clause }, "}" ;
+match-clause     = type-instantiation, ":", "{", code-block-body, "}", "," ;
+if-let-statement = "if", "let", type-instantiation, "=" expression, "{", code-block-body, "}"
+                   "else", "{", code-block-body, "}" ;
