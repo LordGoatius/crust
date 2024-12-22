@@ -1,0 +1,61 @@
+(* NOTE: Tokens can be found in the spec file *)
+translation-unit = declaration*
+
+declaration = function-declaration
+            | function-definition
+            | static-variable-declaration
+            | type-definiton 
+            ;
+
+type-specifier = "u8"
+               | "u16"
+               | "u32"
+               | "u64"
+               | "usize"
+               | "i8" 
+               | "i16" 
+               | "i32"
+               | "i64"
+               | "isize"
+               | "z8"
+               | "z16"
+               | "z32"
+               | "z64"
+               | "zsize"
+               | "f32"
+               | "f64"
+               | "c32"
+               | "c64"
+               | "struct", ident
+               | "enum", ident
+               | "union", ident
+               | tuple-def
+               | type-specifier, "*", (* NOTE: ptrs :) *)
+               ;
+
+tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
+
+
+type-qualifier = "static" ;
+
+type-definition = (( "struct", ident, "{", { ident, { type-specifier | user-type }, ";", }, "}" ) 
+                 | ( "union",  ident, "{", { ident, { type-specifier | user-type }, ";", }, "}" )
+                 | ( "enum",   ident, "{", { ident, [ type-specifier | user-type ], ";", }, "}" ), ), ";" ;
+
+
+type-instantiation = { "&" }, ( int-instantiation
+                   | float-instantiation
+                   | gaussian-instantiation
+                   | complex-instantiation
+                   | string-literal
+                   | array-instantiation
+                   | tuple-instantiation
+                   | struct-instantiation
+                   | enum-instantiation
+                   ), ";" ;
+
+variable-declaration = 
+    type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;
+
+static-variable-declaration = "static", variable-declaration ;
+

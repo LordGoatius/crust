@@ -167,6 +167,9 @@ pub struct Crust {
     #[rule("mod")]
     r#mod: Lexeme<Keyword>,
 
+    #[rule("void")]
+    void: Lexeme<Keyword>,
+
     #[rule("struct")]
     r#struct: Lexeme<Keyword>,
 
