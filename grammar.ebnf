@@ -26,9 +26,9 @@ type-specifier = "u8"
                | "f64"
                | "c32"
                | "c64"
-               | "struct", ident
-               | "enum", ident
-               | "union", ident
+               | "struct", ident,
+               | "enum", ident,
+               | "union", ident,
                | tuple-def
                | type-specifier, "*", (* NOTE: ptrs :) *)
                ;
@@ -43,16 +43,36 @@ type-definition = (( "struct", ident, "{", { ident, { type-specifier | user-type
                  | ( "enum",   ident, "{", { ident, [ type-specifier | user-type ], ";", }, "}" ), ), ";" ;
 
 
-type-instantiation = { "&" }, ( int-instantiation
-                   | float-instantiation
-                   | gaussian-instantiation
-                   | complex-instantiation
-                   | string-literal
-                   | array-instantiation
-                   | tuple-instantiation
-                   | struct-instantiation
-                   | enum-instantiation
-                   ), ";" ;
+type-instantiation = ( expression
+                     | string-literal
+                     | array-instantiation
+                     | tuple-instantiation
+                     | struct-instantiation
+                     | enum-instantiation
+                     | { "&" }, ident
+                     ) ;
+
+expression = ( binary-op
+      | unary-op
+      | ident
+      | function-call
+      | conditional   (* conditionals are binops *)
+      | literal       (* number literal *)
+      | "(", expression, ")"),;
+
+binary-op = expression, op, expression ;
+conditional = binary-op ; (* this is true, just only with logical operators.
+                             nevertheless, for the parser, this is okay, everything 
+                             else will be handled in the type checker *)
+unary-op  = op, ( ident | literal ) 
+          | op, "(", expression, ")" ;
+function-call = ident, "(", [ ident ], { ",", ident }, ")" ;
+
+array-instantiation = "[", [ type-instantiation ], { ",", type-instantiation }, "]" ;
+tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
+
+struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;
+enum-instantiation   = ident, [ type-instantiation ] ;
 
 variable-declaration = 
     type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;

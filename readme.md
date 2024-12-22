@@ -36,26 +36,26 @@ tuple = (-12, 14);
 int_option thing() {
     u32 my_var;
     my_var = 14;
-    int_option my_opt = none;
+    int_option my_opt = none; // in definition 
 
-    if let int_option.some value = my_opt {
-        return enum int_option.none;
+    if let some value = my_opt {
+        return none;
     } else {
-        return enum int_option.some my_var;
+        return my_var;
     }
 }
 
 structype thing_1() {
     struct structype thing = {
-        my_int = -255;
-        my_uint = 13;
-        my_fl = 12.4;
+        my_int = -255,
+        my_uint = 13,
+        my_fl = 12.4,
     };
     thing.my_int = 12;
-    return struct structype {
-        my_int = -255;
-        my_uint = 13;
-        my_fl = 12.4;
+    return {
+        my_int = -255,
+        my_uint = 13,
+        my_fl = 12.4,
     };
 
 }
@@ -67,14 +67,14 @@ void thing_2() {
 
 // We also get a match expression
 void match() {
-    match enum int_option.none {
-        int_option.none: {
+    match none {
+        none: {
             return;
         },
-        int_option.some 4: {
+        some 4: {
             return;
         },
-        int_option.some _: {
+        some _: {
             return;
         },
     } // match needs no semicolon, just like `if` and `for`
