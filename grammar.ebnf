@@ -3,7 +3,7 @@ translation-unit = declaration*
 
 declaration = function-declaration
             | function-definition
-            | type-definiton 
+            | type-definiton
             | static-variable-declaration
             ;
 
@@ -12,8 +12,8 @@ type-specifier = "u8"
                | "u32"
                | "u64"
                | "usize"
-               | "i8" 
-               | "i16" 
+               | "i8"
+               | "i16"
                | "i32"
                | "i64"
                | "isize"
@@ -26,6 +26,7 @@ type-specifier = "u8"
                | "f64"
                | "c32"
                | "c64"
+               | "bool"
                | "struct", ident,
                | "enum", ident,
                | "union", ident,
@@ -36,16 +37,14 @@ type-specifier = "u8"
 
 tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
 
-
 type-qualifier = "static" ;
 
-type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" ) 
+type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
                  | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
                  | ( "enum",   ident, "{", { ident, type-specifier, ";" }, "}" )), ";" ;
 
 
 type-instantiation = ( expression
-                     | string-literal
                      | array-instantiation
                      | tuple-instantiation
                      | struct-instantiation
@@ -61,12 +60,20 @@ expression = ( binary-op
       | literal       (* number literal *)
       | "(", expression, ")"),;
 
+literal = string-literal
+        | ptr-literal
+        | int-literal
+        | float-literal
+        | gaussian-literal
+        | complex-literal
+        | bool-literal ;
+
 binary-op = expression, op, expression ;
 conditional = binary-op | unary-op ; (* this is true, just only with logical operators.
                                         nevertheless, for the parser, this is okay, everything 
                                         else will be handled in the type checker *)
 
-unary-op  = op, ( ident | literal ) 
+unary-op  = op, ( ident | literal )
           | op, "(", expression, ")" ;
 function-call = ident, "(", [ ident ], { ",", ident }, ")" ;
 
