@@ -15,33 +15,10 @@ fn main() {
     let file = ctx.open_file(file, &report).unwrap();
     let tokens = file.lex(Crust::get().spec(), &report).unwrap();
 
-    print_tree(tokens, &ctx, 0);
+    print_tree(tokens.cursor(), &ctx, 0);
 }
 
-fn print_tree(tokens: Stream, ctx: &ilex::Context, val: u8) {
-    for token in &tokens {
-        if let Ok(br) = token.bracket() {
-            for _ in 0..val {
-                print!("\t");
-            }
-            print!("{:?}", br.open().text(&ctx));
-            println!();
-            print_subtree(br.contents(), ctx, val + 1);
-
-            for _ in 0..val {
-                print!("\t");
-            }
-            print!("{:?}", br.close().text(&ctx));
-        } else {
-            for _ in 0..val {
-                print!("\t");
-            }
-            println!("{:?}", token.text(&ctx));
-        }
-    }
-}
-
-fn print_subtree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
+fn print_tree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
     for token in tokens {
         if let Ok(br) = token.bracket() {
             for _ in 0..val {
