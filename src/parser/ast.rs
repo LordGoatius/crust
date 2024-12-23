@@ -4,7 +4,7 @@ use super::ops::{BinOp, ShortAssign, UnOp};
 
 // (* NOTE: Tokens can be found in the spec file *)
 // translation-unit = declaration*
-pub struct TranslationUnit(Vec<Declaration>);
+pub struct TranslationUnit(pub Vec<Declaration>);
 
 // declaration = function-declaration
 //             | function-definition
@@ -210,7 +210,7 @@ pub struct VariableDeclaration {
 // static-variable-declaration = "static", variable-declaration ;
 
 pub struct StaticVariableDeclaration {
-    declaration: VariableDeclaration
+    pub declaration: VariableDeclaration
 }
 
 // function-declaration = 
