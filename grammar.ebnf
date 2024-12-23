@@ -31,11 +31,14 @@ type-specifier = "u8"
                | "enum", ident,
                | "union", ident,
                | tuple-def
+               | array-def
                | user-type (* pretty sure this is context dependent *)
                | type-specifier, "*", (* NOTE: ptrs :) *)
                ;
 
 tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
+
+array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
 
 type-qualifier = "static" ;
 

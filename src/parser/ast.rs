@@ -67,14 +67,14 @@ pub enum Type {
     Bool,
     // tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
     Tuple(Vec<Type>),
+    // array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
+    Array(Box<Type>, Vec<usize>),
     Struct(String),
     Enum(String),
     Union(String),
     Pointer(Box<Type>)
 }
 
-// type-qualifier = "static" ;
-// 
 // type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
 //                  | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
 //                  | ( "enum",   ident, "{", { ident, type-specifier, ";" }, "}" )
@@ -202,9 +202,10 @@ pub enum PointerInstantiation {
 //     type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;
 
 pub struct VariableDeclaration {
-    ident: String,
-    definition: Option<TypeInstantiation>,
-    extra: Option<Vec<(String, Option<TypeInstantiation>)>>
+    pub var_type: Type, 
+    pub ident: String,
+    pub definition: Option<TypeInstantiation>,
+    pub extra: Vec<(String, Option<TypeInstantiation>)>
 }
 
 // static-variable-declaration = "static", variable-declaration ;
