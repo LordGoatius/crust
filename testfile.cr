@@ -21,8 +21,7 @@ typedef int_flt (u32, f64);
 
 // Static variables, tuple
 static int_flt my_tuple = (15, 34);
-(i32, u32) tuple;
-tuple = (-12, 14);
+(i32, u32) tuple = (-12, 14);
 
 // All formats can assume C style layout without Rust style
 // struct layout optimization. 
@@ -50,6 +49,7 @@ structype thing_1() {
         my_fl = 12.4,
     };
     thing.my_int = 12;
+    &thing->my_int = 13;
     return {
         my_int = -255,
         my_uint = 13,

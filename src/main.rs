@@ -1,13 +1,13 @@
 pub mod lexer;
+pub mod parser;
 
 use ilex::token::Cursor;
-use ilex::token::Stream;
 use ilex::Spanned;
 
 use crate::lexer::Crust;
 
 fn main() {
-    let file = String::from(std::env::args().into_iter().nth(1).unwrap());
+    let file = std::env::args().nth(1).unwrap();
 
     let ctx = ilex::Context::new();
     let report = ctx.new_report();
@@ -16,6 +16,7 @@ fn main() {
     let tokens = file.lex(Crust::get().spec(), &report).unwrap();
 
     print_tree(tokens.cursor(), &ctx, 0);
+    // let cursor = tokens.cursor();
 }
 
 fn print_tree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
@@ -24,20 +25,20 @@ fn print_tree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
             for _ in 0..val {
                 print!("\t");
             }
-            print!("{:?}", br.open().text(&ctx));
+            print!("{:?}", br.open().text(ctx));
             println!();
             print_tree(br.contents(), ctx, val + 1);
 
             for _ in 0..val {
                 print!("\t");
             }
-            print!("{:?}", br.close().text(&ctx));
+            print!("{:?}", br.close().text(ctx));
             println!();
         } else {
             for _ in 0..val {
                 print!("\t");
             }
-            println!("{:?}", token.text(&ctx));
+            println!("{:?}", token.text(ctx));
         }
     }
 }

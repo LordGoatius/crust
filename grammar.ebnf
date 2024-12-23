@@ -41,15 +41,15 @@ type-qualifier = "static" ;
 
 type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
                  | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
-                 | ( "enum",   ident, "{", { ident, type-specifier, ";" }, "}" )), ";" ;
-
+                 | ( "enum",   ident, "{", { ident, [ type-specifier ], "," }, "}" )), ";" ;
+                 | "typedef", type-specifier, ident ), ";" ;
 
 type-instantiation = ( expression
                      | array-instantiation
                      | tuple-instantiation
                      | struct-instantiation
                      | enum-instantiation
-                     | { "&" }, ident
+                     | pointer-instantiation
                      ) ;
 
 expression = ( binary-op
@@ -75,7 +75,7 @@ conditional = binary-op | unary-op ; (* this is true, just only with logical ope
 
 unary-op  = op, ( ident | literal )
           | op, "(", expression, ")" ;
-function-call = ident, "(", [ ident ], { ",", ident }, ")" ;
+function-call = ident, "(", [ expression ], { ",", expression }, ")" ;
 
 array-instantiation = "[", [ type-instantiation ], { ",", type-instantiation }, "]" ;
 tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
@@ -83,19 +83,19 @@ tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, 
 struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;
 enum-instantiation   = ident, [ type-instantiation ] ;
 
+pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
+
 variable-declaration = 
     type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;
 
 static-variable-declaration = "static", variable-declaration ;
 
-function-definition = 
+function-declaration = 
     type-specifier, ident, "(", [ type-specifier, ident ], { ",", type-specifier, ident }, ")", ";" ;
-
-type-definition = "typedef", type-specifier, ident, ";" ;
 
 code-block-body = statement* ;
 
-function-definition = code-block-body ;
+function-definition = function-declaration, code-block-body ;
 
 statement = variable-declaration
           | variable-assignment
@@ -131,4 +131,4 @@ return-statement = "return", expression, ";" ;
 match-statement  = "match", expression, "{", { match-clause }, "}" ;
 match-clause     = type-instantiation, ":", "{", code-block-body, "}", "," ;
 if-let-statement = "if", "let", type-instantiation, "=" expression, "{", code-block-body, "}"
-                   "else", "{", code-block-body, "}" ;
+                  [ "else", "{", code-block-body, "}", ] ;
