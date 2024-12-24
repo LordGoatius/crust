@@ -49,7 +49,7 @@ structype thing_1() {
         my_fl = 12.4,
     };
     thing.my_int = 12;
-    &thing->my_int = 13;
+    thing->my_int = 13;
     return {
         my_int = -255,
         my_uint = 13,

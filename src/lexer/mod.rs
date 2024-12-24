@@ -3,12 +3,18 @@ use ilex::Lexeme;
 
 #[ilex::spec]
 pub struct Crust {
+    #[rule(".")]
+    dot: Lexeme<Keyword>,
+
     #[named("ident")]
     #[rule(Ident::new()
-        .ascii_only())]
+        .ascii_only()
+        .prefixes('a'..='z')
+        .prefixes('A'..='Z')
+        .prefixes('_'..='_')
+        )]
     ident: Lexeme<Ident>,
 
-    #[named("ident_access")]
     #[rule(Ident::new()
         .ascii_only()
         .extra_continue('.'))]
@@ -37,10 +43,10 @@ pub struct Crust {
         )]
     bin_literal: Lexeme<Digital>,
 
-    #[named]
     #[rule(Digital::new(10)
+        .separator('_')
         .minus()
-        .point_limit(0..2)
+        .point_limit(1..2)
         .exponents(["e", "E"], Digits::new(10).plus().minus()))]
     float_literal: Lexeme<Digital>,
 
@@ -79,9 +85,6 @@ pub struct Crust {
 
     #[rule('*')]
     star: Lexeme<Keyword>,
-
-    #[rule('.')]
-    dot: Lexeme<Keyword>,
 
     #[rule("->")]
     thin_arrow: Lexeme<Keyword>,
