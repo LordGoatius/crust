@@ -4,7 +4,7 @@ use super::ops::{BinOp, ShortAssign, UnOp};
 
 // (* NOTE: Tokens can be found in the spec file *)
 // translation-unit = declaration*
-pub struct TranslationUnit(pub Vec<Declaration>);
+pub struct File(pub Vec<Declaration>);
 
 // declaration = function-declaration
 //             | function-definition

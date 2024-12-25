@@ -3,6 +3,7 @@ pub mod parser;
 
 use ilex::token::Cursor;
 use ilex::Spanned;
+use owo_colors::{colors::{css::{Brown, Gold, Gray}, Blue, Green, Red}, OwoColorize};
 
 use crate::lexer::Crust;
 
@@ -25,20 +26,26 @@ fn print_tree(tokens: Cursor, ctx: &ilex::Context, val: u8) {
             for _ in 0..val {
                 print!("\t");
             }
-            print!("{:?}", br.open().text(ctx));
+            print!("{:?}", br.open().text(ctx).fg::<Gray>());
             println!();
             print_tree(br.contents(), ctx, val + 1);
 
             for _ in 0..val {
                 print!("\t");
             }
-            print!("{:?}", br.close().text(ctx));
+            print!("{:?}", br.close().text(ctx).fg::<Gray>());
             println!();
         } else {
             for _ in 0..val {
                 print!("\t");
             }
-            println!("{:?}", token.text(ctx));
+            match token {
+                ilex::token::Any::Keyword(token) => println!("{:?}, {:?}", token.text(ctx).fg::<Gold>(), token.fg::<Green>()),
+                ilex::token::Any::Ident(token) => println!("{:?}, {:?}", token.text(ctx).fg::<Blue>(), token.fg::<Green>()),
+                ilex::token::Any::Digital(token) => println!("{:?}, {:?}", token.text(ctx).fg::<Red>(), token.fg::<Green>()),
+                ilex::token::Any::Quoted(token) => println!("{:?}, {:?}", token.text(ctx).fg::<Brown>(), token.fg::<Green>()),
+                _ => (),
+            }
         }
     }
 }
