@@ -9,30 +9,30 @@ pub struct Crust {
     // ident_access: Lexeme<Ident>,
 
     #[rule("//")]
-    comment: Lexeme<Comment>,
+    pub comment: Lexeme<Comment>,
 
     #[rule("/*", "*/")]
-    block_comment: Lexeme<Comment>,
+    pub block_comment: Lexeme<Comment>,
 
     #[rule(Digital::new(16)
         .separator('_')
         .minus()
         .prefix("0x")
         )]
-    hex_literal: Lexeme<Digital>,
+    pub hex_literal: Lexeme<Digital>,
 
     #[rule(Digital::new(2)
         .separator('_')
         .minus()
         .prefix("0b")
         )]
-    binary_literal: Lexeme<Digital>,
+    pub binary_literal: Lexeme<Digital>,
 
     #[rule(Digital::new(10)
         .separator('_')
         .minus()
         )]
-    integer_literal: Lexeme<Digital>,
+    pub integer_literal: Lexeme<Digital>,
 
     #[named]
     #[rule(Quoted::new('"')
@@ -41,7 +41,7 @@ pub struct Crust {
             "\\\"", r"\\", r"\/",
             r"\b", r"\f",  r"\n", r"\t", r"\r",
         ]))]
-    string: Lexeme<Quoted>,
+    pub string: Lexeme<Quoted>,
 
     #[named]
     #[rule(Quoted::new('\'')
@@ -49,219 +49,219 @@ pub struct Crust {
             r"\b", r"\f",  r"\n", r"\t", r"\r",
         ])
         )]
-    char: Lexeme<Quoted>,
+    pub char: Lexeme<Quoted>,
 
     #[named]
     #[rule("[", "]")]
-    array: Lexeme<Bracket>,
+    pub array: Lexeme<Bracket>,
 
     #[named]
     #[rule("{", "}")]
-    block: Lexeme<Bracket>,
+    pub block: Lexeme<Bracket>,
 
     #[named]
     #[rule("(", ")")]
-    parens: Lexeme<Bracket>,
+    pub parens: Lexeme<Bracket>,
 
     #[rule('_')]
     unused: Lexeme<Keyword>,
 
     #[named]
     #[rule(".")]
-    dot: Lexeme<Keyword>,
+    pub dot: Lexeme<Keyword>,
 
     #[rule('*')]
-    star: Lexeme<Keyword>,
+    pub star: Lexeme<Keyword>,
 
     #[rule("->")]
-    thin_arrow: Lexeme<Keyword>,
+    pub thin_arrow: Lexeme<Keyword>,
 
     #[rule("++")]
-    plusplus: Lexeme<Keyword>,
+    pub plusplus: Lexeme<Keyword>,
 
     #[rule("--")]
-    minusminus: Lexeme<Keyword>,
+    pub minusminus: Lexeme<Keyword>,
 
     #[rule('+')]
-    add: Lexeme<Keyword>,
+    pub add: Lexeme<Keyword>,
 
     #[rule('-')]
-    neg: Lexeme<Keyword>,
+    pub neg: Lexeme<Keyword>,
 
     #[rule('/')]
-    div: Lexeme<Keyword>,
+    pub div: Lexeme<Keyword>,
 
     #[rule('%')]
-    mod_op: Lexeme<Keyword>,
+    pub mod_op: Lexeme<Keyword>,
 
     #[rule('&')]
-    and: Lexeme<Keyword>,
+    pub and: Lexeme<Keyword>,
 
     #[rule("|")]
-    or: Lexeme<Keyword>,
+    pub or: Lexeme<Keyword>,
 
     #[rule("^")]
-    xor: Lexeme<Keyword>,
+    pub xor: Lexeme<Keyword>,
 
     #[rule("~")]
-    not: Lexeme<Keyword>,
+    pub not: Lexeme<Keyword>,
 
     #[rule("!")]
-    log_not: Lexeme<Keyword>,
+    pub log_not: Lexeme<Keyword>,
 
     #[rule("&&")]
-    log_and: Lexeme<Keyword>,
+    pub log_and: Lexeme<Keyword>,
 
     #[rule("||")]
-    log_or: Lexeme<Keyword>,
+    pub log_or: Lexeme<Keyword>,
 
     #[rule("?")]
-    tern: Lexeme<Keyword>,
+    pub tern: Lexeme<Keyword>,
 
     #[rule(":")]
-    colon: Lexeme<Keyword>,
+    pub colon: Lexeme<Keyword>,
 
     #[rule(">>")]
-    shr: Lexeme<Keyword>,
+    pub shr: Lexeme<Keyword>,
 
     #[rule("<<")]
-    shl: Lexeme<Keyword>,
+    pub shl: Lexeme<Keyword>,
 
     #[rule("<")]
-    less: Lexeme<Keyword>,
+    pub less: Lexeme<Keyword>,
 
     #[rule(">")]
-    greater: Lexeme<Keyword>,
+    pub greater: Lexeme<Keyword>,
 
     #[rule("<=")]
-    leq: Lexeme<Keyword>,
+    pub leq: Lexeme<Keyword>,
 
     #[rule(">=")]
-    geq: Lexeme<Keyword>,
+    pub geq: Lexeme<Keyword>,
 
     #[rule("==")]
-    equals: Lexeme<Keyword>,
+    pub equals: Lexeme<Keyword>,
 
     #[rule("!=")]
-    not_eq: Lexeme<Keyword>,
+    pub not_eq: Lexeme<Keyword>,
 
     #[rule(";")]
-    semicolon: Lexeme<Keyword>,
+    pub semicolon: Lexeme<Keyword>,
 
     #[rule(",")]
-    comma: Lexeme<Keyword>,
+    pub comma: Lexeme<Keyword>,
 
     #[rule("=>")]
-    fat_arrow: Lexeme<Keyword>,
+    pub fat_arrow: Lexeme<Keyword>,
 
     #[rule("void")]
-    void: Lexeme<Keyword>,
+    pub void: Lexeme<Keyword>,
 
     #[rule("union")]
-    union: Lexeme<Keyword>,
+    pub union: Lexeme<Keyword>,
 
     #[rule("typedef")]
-    typedef: Lexeme<Keyword>,
+    pub typedef: Lexeme<Keyword>,
 
     #[rule("sizeof")]
-    sizeof: Lexeme<Keyword>,
+    pub sizeof: Lexeme<Keyword>,
 
     #[rule("mod")]
-    mod_: Lexeme<Keyword>,
+    pub mod_: Lexeme<Keyword>,
 
     #[rule("struct")]
-    struct_: Lexeme<Keyword>,
+    pub struct_: Lexeme<Keyword>,
 
     #[rule("enum")]
-    enum_: Lexeme<Keyword>,
+    pub enum_: Lexeme<Keyword>,
 
     #[rule("for")]
-    for_: Lexeme<Keyword>,
+    pub for_: Lexeme<Keyword>,
 
     #[rule("while")]
-    while_: Lexeme<Keyword>,
+    pub while_: Lexeme<Keyword>,
 
     #[rule("if")]
-    if_: Lexeme<Keyword>,
+    pub if_: Lexeme<Keyword>,
 
     #[rule("else")]
-    else_: Lexeme<Keyword>,
+    pub else_: Lexeme<Keyword>,
 
     #[rule("return")]
-    return_: Lexeme<Keyword>,
+    pub return_: Lexeme<Keyword>,
 
     #[rule("static")]
-    static_: Lexeme<Keyword>,
+    pub static_: Lexeme<Keyword>,
 
     #[rule("match")]
     match_: Lexeme<Keyword>,
 
     #[rule("let")]
-    let_: Lexeme<Keyword>,
+    pub let_: Lexeme<Keyword>,
 
     #[rule("u8")]
-    u8: Lexeme<Keyword>,
+    pub u8: Lexeme<Keyword>,
     #[rule("u16")]
-    u16: Lexeme<Keyword>,
+    pub u16: Lexeme<Keyword>,
     #[rule("u32")]
-    u32: Lexeme<Keyword>,
+    pub u32: Lexeme<Keyword>,
     #[rule("u64")]
-    u64: Lexeme<Keyword>,
+    pub u64: Lexeme<Keyword>,
     #[rule("usize")]
-    usize: Lexeme<Keyword>,
+    pub usize: Lexeme<Keyword>,
     #[rule("i8")]
-    i8: Lexeme<Keyword>,
+    pub i8: Lexeme<Keyword>,
     #[rule("i16")]
-    i16: Lexeme<Keyword>,
+    pub i16: Lexeme<Keyword>,
     #[rule("i32")]
-    i32: Lexeme<Keyword>,
+    pub i32: Lexeme<Keyword>,
     #[rule("i64")]
-    i64: Lexeme<Keyword>,
+    pub i64: Lexeme<Keyword>,
     #[rule("isize")]
-    isize: Lexeme<Keyword>,
+    pub isize: Lexeme<Keyword>,
     #[rule("z8")]
-    z8: Lexeme<Keyword>,
+    pub z8: Lexeme<Keyword>,
     #[rule("z16")]
-    z16: Lexeme<Keyword>,
+    pub z16: Lexeme<Keyword>,
     #[rule("z32")]
-    z32: Lexeme<Keyword>,
+    pub z32: Lexeme<Keyword>,
     #[rule("z64")]
-    z64: Lexeme<Keyword>,
+    pub z64: Lexeme<Keyword>,
     #[rule("zsize")]
-    zsize: Lexeme<Keyword>,
+    pub zsize: Lexeme<Keyword>,
     #[rule("f32")]
-    f32: Lexeme<Keyword>,
+    pub f32: Lexeme<Keyword>,
     #[rule("f64")]
-    f64: Lexeme<Keyword>,
+    pub f64: Lexeme<Keyword>,
     #[rule("c32")]
-    c32: Lexeme<Keyword>,
+    pub c32: Lexeme<Keyword>,
     #[rule("c64")]
-    c64: Lexeme<Keyword>,
+    pub c64: Lexeme<Keyword>,
     #[rule("bool")]
-    bool: Lexeme<Keyword>,
+    pub bool: Lexeme<Keyword>,
 
     #[rule("=")]
-    eq: Lexeme<Keyword>,
+    pub eq: Lexeme<Keyword>,
     #[rule("+=")]
-    add_eq: Lexeme<Keyword>,
+    pub add_eq: Lexeme<Keyword>,
     #[rule("-=")]
-    sub_eq: Lexeme<Keyword>,
+    pub sub_eq: Lexeme<Keyword>,
     #[rule("*=")]
-    mul_eq: Lexeme<Keyword>,
+    pub mul_eq: Lexeme<Keyword>,
     #[rule("\\=")]
-    div_eq: Lexeme<Keyword>,
+    pub div_eq: Lexeme<Keyword>,
     #[rule("%=")]
-    mod_eq: Lexeme<Keyword>,
+    pub mod_eq: Lexeme<Keyword>,
     #[rule(">>=")]
-    shr_eq: Lexeme<Keyword>,
+    pub shr_eq: Lexeme<Keyword>,
     #[rule("<<=")]
-    shl_eq: Lexeme<Keyword>,
+    pub shl_eq: Lexeme<Keyword>,
     #[rule("&=")]
-    and_eq: Lexeme<Keyword>,
+    pub and_eq: Lexeme<Keyword>,
     #[rule("^=")]
-    xor_eq: Lexeme<Keyword>,
+    pub xor_eq: Lexeme<Keyword>,
     #[rule("|=")]
-    or_eq: Lexeme<Keyword>,
+    pub or_eq: Lexeme<Keyword>,
 
     #[named("ident")]
     #[rule(Ident::new()
@@ -270,7 +270,7 @@ pub struct Crust {
         .prefixes('A'..='Z')
         .prefixes('_'..='_')
         )]
-    ident: Lexeme<Ident>,
+    pub ident: Lexeme<Ident>,
     // #[named]
     // #[rule(Digital::new(10)
     //     .separator('_')
