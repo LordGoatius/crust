@@ -154,9 +154,6 @@ pub struct Crust {
     #[rule("=>")]
     pub fat_arrow: Lexeme<Keyword>,
 
-    #[rule("void")]
-    pub void: Lexeme<Keyword>,
-
     #[rule("union")]
     pub union: Lexeme<Keyword>,
 
@@ -239,6 +236,8 @@ pub struct Crust {
     pub c64: Lexeme<Keyword>,
     #[rule("bool")]
     pub bool: Lexeme<Keyword>,
+    #[rule("void")]
+    pub void: Lexeme<Keyword>,
 
     #[rule("=")]
     pub eq: Lexeme<Keyword>,

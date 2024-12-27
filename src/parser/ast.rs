@@ -1,6 +1,6 @@
 use ilex::rule::Sign;
 
-use super::ops::{BinOp, ShortAssign, UnOp};
+use super::ops::*;
 
 // (* NOTE: Tokens can be found in the spec file *)
 // translation-unit = declaration*
@@ -65,6 +65,7 @@ pub enum Type {
     C32,
     C64,
     Bool,
+    Void,
     // tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
     Tuple(Vec<Type>),
     // array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
@@ -72,7 +73,7 @@ pub enum Type {
     Struct(String),
     Enum(String),
     Union(String),
-    Pointer(Box<Type>)
+    Pointer(Box<Type>),
 }
 
 // type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
@@ -214,9 +215,11 @@ pub struct StaticVariableDeclaration {
     pub declaration: VariableDeclaration
 }
 
+// function-signature =
+//     type-specifier, ident, "(", [ type-specifier, ident ], { ",", type-specifier, ident }, ")" ;
+//
 // function-declaration = 
-//     type-specifier, ident, "(", [ type-specifier, ident ], { ",", type-specifier, ident }, ")", ";" ;
-
+//     function-signature, ";" ;
 pub struct FunctionDeclaration {
     return_type: Type,
     ident: String,
@@ -229,7 +232,7 @@ pub struct CodeBlock {
     code: Vec<Statement>
 }
 
-// function-definition = function-declaration, code-block-body ;
+// function-definition = function-signature, code-block-body ;
 
 pub struct FunctionDefinition {
     declaration: FunctionDeclaration,
