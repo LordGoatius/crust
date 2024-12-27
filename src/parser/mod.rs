@@ -72,14 +72,14 @@ fn parse_declaration(
                 cursor, ctx, crust, report,
             )))
         })
-        .case(crust.ident, |tok, cursor| {
+        .case(crust.ident, |_, cursor| {
             // the only way this happens is by a typedef'd user type being the return value of a
             // function
             cursor.back_up(1);
             let ty = parse_type(cursor, ctx, crust, report);
             Some(parse_function(cursor, ctx, crust, report, ty))
         })
-        .case(crust.parens, |tok, cursor| {
+        .case(crust.parens, |_, cursor| {
             // if this happens, probably returns a tuple. Parse it, then return the valid function
             cursor.back_up(1);
             let ty = parse_type(cursor, ctx, crust, report);
