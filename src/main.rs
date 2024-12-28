@@ -1,3 +1,4 @@
+#![feature(stmt_expr_attributes)]
 pub mod lexer;
 pub mod parser;
 

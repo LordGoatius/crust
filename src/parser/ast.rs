@@ -44,6 +44,7 @@ pub enum Declaration {
 //                | tuple-def
 //                | user-type (* pretty sure this is context dependent *)
 //                | type-specifier, "*", (* NOTE: ptrs :) *) ;
+#[derive(Clone)]
 pub enum Type {
     U8,
     U16,
@@ -69,7 +70,7 @@ pub enum Type {
     // tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
     Tuple(Vec<Type>),
     // array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
-    Array(Box<Type>, Vec<usize>),
+    Array(Box<Type>, usize),
     Struct(String),
     Enum(String),
     Union(String),

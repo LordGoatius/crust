@@ -1,10 +1,12 @@
 pub mod ast;
 pub mod ops;
 
+use std::cell::UnsafeCell;
+
 use ast::*;
 use ilex::{
     token::{self, Cursor, Stream},
-    Context, Lexeme, Report,
+    Context, Lexeme, Report, Spanned,
 };
 
 use crate::lexer::Crust;
@@ -42,6 +44,7 @@ fn parse_declaration(
     report: &Report,
 ) -> Option<Declaration> {
     let decl = token::switch()
+        // Static
         .case(crust.static_, |_, cursor| {
             // static token has been parsed, can be ignored
             let declaration = parse_variable_declaration(cursor, ctx, crust, report);
@@ -49,6 +52,7 @@ fn parse_declaration(
                 StaticVariableDeclaration { declaration },
             ))
         })
+        // Type Definition OR Function Signature
         .cases([crust.struct_, crust.enum_, crust.union], |tok, cursor| {
             // back up so we can read type again
             cursor.back_up(1);
@@ -58,7 +62,7 @@ fn parse_declaration(
             // name.
 
             if let Some(_) = cursor.peek(crust.ident) {
-                return Some(parse_function(cursor, ctx, crust, report, ty))
+                return Some(parse_function(cursor, ctx, crust, report, ty));
             }
 
             // if it is a valid "struct", "ident" format, then we need to back up one, so the ident
@@ -67,11 +71,13 @@ fn parse_declaration(
             let type_decl = parse_type_definition(cursor, ctx, crust, report, tok);
             Some(Declaration::TypeDefinition(type_decl))
         })
+        // Type Definition
         .case(crust.typedef, |_, cursor| {
             Some(Declaration::TypeDefinition(parse_typedef(
                 cursor, ctx, crust, report,
             )))
         })
+        // Function Signature
         .case(crust.ident, |_, cursor| {
             // the only way this happens is by a typedef'd user type being the return value of a
             // function
@@ -79,13 +85,14 @@ fn parse_declaration(
             let ty = parse_type(cursor, ctx, crust, report);
             Some(parse_function(cursor, ctx, crust, report, ty))
         })
+        // Function Signature
         .case(crust.parens, |_, cursor| {
             // if this happens, probably returns a tuple. Parse it, then return the valid function
             cursor.back_up(1);
             let ty = parse_type(cursor, ctx, crust, report);
             Some(parse_function(cursor, ctx, crust, report, ty))
         })
-        // Going to match any compiler types
+        // Function Signature
         .cases(
             [
                 crust.u8,
@@ -108,6 +115,7 @@ fn parse_declaration(
                 crust.c32,
                 crust.c64,
                 crust.bool,
+                crust.void,
             ],
             |_, cursor| {
                 cursor.back_up(1);
@@ -115,8 +123,10 @@ fn parse_declaration(
                 Some(parse_function(cursor, ctx, crust, report, ty))
             },
         )
+        // End
         .case(Lexeme::eof(), |_, _| None)
-        .take(cursor, report)??;
+        .take(cursor, report)
+        .expect("This shouldn't fail until error handling is upgraded after codegen works")?;
 
     Some(decl)
 }
@@ -175,11 +185,24 @@ fn parse_function(
     ctx: &Context,
     crust: &Crust,
     report: &Report,
-    ret: Type
+    ret: Type,
 ) -> Declaration {
     todo!()
 }
 
+/// NOTE: Typedef does not support C style struct typedefs as such:
+/// ```c
+/// typedef struct {
+///    ...
+/// } my_struct;
+/// ```
+/// It must be:
+/// ```c
+/// struct my_struct {
+///     ...
+/// };
+/// typedef my_struct my_struct;
+/// ```
 // Returns a typedef
 // pub enum TypeDefinition {
 //     ...
@@ -194,8 +217,10 @@ fn parse_typedef(
     crust: &Crust,
     report: &Report,
 ) -> TypeDefinition {
-    // typedef can be ignored, that token has been consumed
-    todo!()
+    let prev = parse_type(cursor, ctx, crust, report);
+    let ident = cursor.take(crust.ident, report).unwrap();
+
+    TypeDefinition::TypeDef { old_type: Box::new(prev), alias: ident.text(ctx).to_string() }
 }
 
 // pub enum Type {
@@ -230,5 +255,173 @@ fn parse_typedef(
 //     Pointer(Box<Type>),
 // }
 fn parse_type(cursor: &mut Cursor, ctx: &Context, crust: &Crust, report: &Report) -> Type {
-    todo!()
+    let ty = token::switch()
+        .cases(
+            [
+                crust.u8,
+                crust.u16,
+                crust.u32,
+                crust.u64,
+                crust.usize,
+                crust.i8,
+                crust.i16,
+                crust.i32,
+                crust.i64,
+                crust.isize,
+                crust.z8,
+                crust.z16,
+                crust.z32,
+                crust.z64,
+                crust.zsize,
+                crust.f32,
+                crust.f64,
+                crust.c32,
+                crust.c64,
+                crust.bool,
+                crust.void,
+            ],
+            // Have to check pointer OR array
+            |tok, _| match tok.text(ctx) {
+                "u8" => Type::U8,
+                "u16" => Type::U16,
+                "u32" => Type::U32,
+                "u64" => Type::U64,
+                "usize" => Type::USize,
+                "i8" => Type::I8,
+                "i16" => Type::I16,
+                "i32" => Type::I32,
+                "i64" => Type::I64,
+                "isize" => Type::ISize,
+                "z8" => Type::Z8,
+                "z16" => Type::Z16,
+                "z32" => Type::Z32,
+                "z64" => Type::Z64,
+                "zsize" => Type::ZSize,
+                "f32" => Type::F32,
+                "f64" => Type::F64,
+                "c32" => Type::C32,
+                "c64" => Type::C64,
+                "bool" => Type::Bool,
+                "void" => Type::Void,
+                _ => unreachable!(),
+            },
+        )
+        // Tuple
+        .case(crust.parens, |tok, _| {
+            Type::Tuple(
+                tok.contents()
+                    .delimited(crust.comma, |tokens| {
+                        // Toks is a cursor that contains the comma delimited tokens in the
+                        // parentheses around our tuple.
+                        // This means each object separated by parentheses must be a valid type, and
+                        // only a valid type.
+                        // We can then recursively call this function on each, adding them to a Vec.
+                        // Eventually, we'll end in a terminal type, and return.
+                        let ty = parse_type(tokens, ctx, crust, report);
+                        Some(ty)
+                    })
+                    .map(|(i, _)| i)
+                    .collect(),
+            )
+        })
+        .case(crust.struct_, |_, cursor| {
+            if let Some(ident) = cursor.try_take(crust.ident) {
+                // ugh don't wanna deal with lifetimes I'll refactor it later don't @ me
+                Type::Struct(ident.text(ctx).to_string())
+            } else {
+                panic!()
+            }
+        })
+        .case(crust.enum_, |_, cursor| {
+            if let Some(ident) = cursor.try_take(crust.ident) {
+                // ugh don't wanna deal with lifetimes I'll refactor it later don't @ me
+                Type::Enum(ident.text(ctx).to_string())
+            } else {
+                panic!()
+            }
+        })
+        .case(crust.union, |_, cursor| {
+            if let Some(ident) = cursor.try_take(crust.ident) {
+                // ugh don't wanna deal with lifetimes I'll refactor it later don't @ me
+                Type::Union(ident.text(ctx).to_string())
+            } else {
+                panic!()
+            }
+        })
+        .take(cursor, report)
+        .unwrap_or_else(|| unreachable!(":)"));
+
+    let ty_cell = UnsafeCell::new(ty);
+
+    // FIXME: Gotta do that post processing for pointers and for arrays
+    // Rust hates me :(
+    // It's safe, just trust me
+    // What if I wrapped it in an unsafecell
+    // NOTE: Line (curr - 6)
+    #[rustfmt::skip]
+    while let Some(wrapped) = token::switch()
+        .case(crust.array, |tok, _| {
+            let length: Vec<_> = tok.contents().collect();
+            if length.len() > 1 || length.len() == 0 {
+                panic!(":( not valid array len")
+            }
+
+            let len = token::switch()
+                .case(crust.integer_literal, |tok, _| {
+                    Some(str::parse::<usize>(tok.text(ctx)).unwrap_or_else(|_| unreachable!()))
+                })
+                .case(crust.hex_literal, |tok, _| {
+                    Some(
+                        usize::from_str_radix(&tok.text(ctx)[2..], 16)
+                            .unwrap_or_else(|_| unreachable!()),
+                    )
+                })
+                .case(crust.octal_literal, |tok, _| {
+                    Some(
+                        usize::from_str_radix(&tok.text(ctx)[2..], 8)
+                            .unwrap_or_else(|_| unreachable!()),
+                    )
+                })
+                .case(crust.binary_literal, |tok, _| {
+                    Some(
+                        usize::from_str_radix(&tok.text(ctx)[2..], 2)
+                            .unwrap_or_else(|_| unreachable!()),
+                    )
+                })
+                .take(&mut tok.contents(), report)
+                .expect("Oops! all integers 0")
+                .expect("Oops! all integers 1");
+
+    // NOTE: There are 2 options here. I'm currently using the first one.
+    /* <===================================== 1 =====================================> */
+            // 90% sure this is wildly unsafe
+            Type::Array(Box::new(unsafe { (*ty_cell.get()).clone() }), len)
+        })
+        .case(crust.star, |_, _| {
+            // 100% sure this one really is wildly unsafe though
+            Type::Pointer(Box::new(unsafe { (*ty_cell.get()).clone() }))
+        })
+        .try_take(cursor)
+    {
+        unsafe {
+            // 100% sure this one really is wildly unsafe though
+            *ty_cell.get() = wrapped;
+        }
+    }
+    /* <===================================== 2 =====================================> */
+    //         // 90% sure this is wildly unsafe
+    //         unsafe {
+    //             *ty_cell.get() = Type::Array(Box::new((*ty_cell.get()).clone()), len)
+    //         }
+    //     })
+    //     .case(crust.star, |_, _| {
+    //         // 100% sure this one really is wildly unsafe though
+    //         unsafe {
+    //             *ty_cell.get() = Type::Pointer(Box::new((*ty_cell.get()).clone()));
+    //         }
+    //     })
+    //     .try_take(cursor)
+    // {}
+
+    ty_cell.into_inner()
 }

@@ -21,6 +21,13 @@ pub struct Crust {
         )]
     pub hex_literal: Lexeme<Digital>,
 
+    #[rule(Digital::new(8)
+        .separator('_')
+        .minus()
+        .prefix("0o")
+        )]
+    pub octal_literal: Lexeme<Digital>,
+
     #[rule(Digital::new(2)
         .separator('_')
         .minus()
