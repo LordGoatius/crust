@@ -1,7 +1,7 @@
 pub mod ast;
 pub mod ops;
 
-use std::cell::UnsafeCell;
+use std::cell::RefCell;
 
 use ast::*;
 use ilex::{
@@ -351,13 +351,12 @@ fn parse_type(cursor: &mut Cursor, ctx: &Context, crust: &Crust, report: &Report
         .take(cursor, report)
         .unwrap_or_else(|| unreachable!(":)"));
 
-    let ty_cell = UnsafeCell::new(ty);
+    let ty_cell = RefCell::new(ty);
 
-    // FIXME: Gotta do that post processing for pointers and for arrays
     // Rust hates me :(
     // It's safe, just trust me
     // What if I wrapped it in an unsafecell
-    // NOTE: Line (curr - 6)
+    // NOTE: Line (curr - 5)
     #[rustfmt::skip]
     while let Some(wrapped) = token::switch()
         .case(crust.array, |tok, _| {
@@ -392,36 +391,17 @@ fn parse_type(cursor: &mut Cursor, ctx: &Context, crust: &Crust, report: &Report
                 .expect("Oops! all integers 0")
                 .expect("Oops! all integers 1");
 
-    // NOTE: There are 2 options here. I'm currently using the first one.
-    /* <===================================== 1 =====================================> */
-            // 90% sure this is wildly unsafe
-            Type::Array(Box::new(unsafe { (*ty_cell.get()).clone() }), len)
+            let ty_clone = ty_cell.borrow().clone();
+            Type::Array(Box::new(ty_clone), len)
         })
         .case(crust.star, |_, _| {
-            // 100% sure this one really is wildly unsafe though
-            Type::Pointer(Box::new(unsafe { (*ty_cell.get()).clone() }))
+            let ty_clone = ty_cell.borrow().clone();
+            Type::Pointer(Box::new(ty_clone))
         })
         .try_take(cursor)
     {
-        unsafe {
-            // 100% sure this one really is wildly unsafe though
-            *ty_cell.get() = wrapped;
-        }
+        *ty_cell.borrow_mut() = wrapped;
     }
-    /* <===================================== 2 =====================================> */
-    //         // 90% sure this is wildly unsafe
-    //         unsafe {
-    //             *ty_cell.get() = Type::Array(Box::new((*ty_cell.get()).clone()), len)
-    //         }
-    //     })
-    //     .case(crust.star, |_, _| {
-    //         // 100% sure this one really is wildly unsafe though
-    //         unsafe {
-    //             *ty_cell.get() = Type::Pointer(Box::new((*ty_cell.get()).clone()));
-    //         }
-    //     })
-    //     .try_take(cursor)
-    // {}
 
     ty_cell.into_inner()
 }
