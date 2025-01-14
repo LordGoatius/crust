@@ -165,6 +165,39 @@ fn parse_type_definition(
     report: &Report,
     token: token::Keyword,
 ) -> TypeDefinition {
+    token::switch()
+        .case(crust.struct_, |_, cursor| parse_struct_def(cursor, ctx, crust, report))
+        .case(crust.union, |_, cursor| parse_union_def(cursor, ctx, crust, report))
+        .case(crust.enum_, |_, cursor| parse_enum_def(cursor, ctx, crust, report))
+        .take(cursor, report)
+        .unwrap_or_else(|| unreachable!(":)"))
+}
+
+fn parse_struct_def(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> TypeDefinition {
+    todo!()
+}
+
+fn parse_union_def(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> TypeDefinition {
+    // This will stay TODO lol
+    todo!()
+}
+
+fn parse_enum_def(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> TypeDefinition {
     todo!()
 }
 
