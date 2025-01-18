@@ -79,7 +79,7 @@ pub enum Type {
 
 // type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
 //                  | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
-//                  | ( "enum",   ident, "{", { ident, type-specifier, ";" }, "}" )
+//                  | ( "enum",   ident, "{", { ident, type-specifier, "," }, "}" )
 //                  | "typedef", type-specifier, ident ), ";" ;
 pub enum TypeDefinition {
     StructDef {
@@ -222,28 +222,28 @@ pub struct StaticVariableDeclaration {
 // function-declaration = 
 //     function-signature, ";" ;
 pub struct FunctionDeclaration {
-    return_type: Type,
-    ident: String,
-    arguments: Vec<(Type, String)>
+    pub return_type: Type,
+    pub ident: String,
+    pub arguments: Vec<(Type, String)>
 }
 
 // code-block-body = statement* ;
 
 pub struct CodeBlock {
-    code: Vec<Statement>
+    pub code: Vec<Statement>
 }
 
 // function-definition = function-signature, code-block-body ;
 
 pub struct FunctionDefinition {
-    declaration: FunctionDeclaration,
-    code: CodeBlock
+    pub declaration: FunctionDeclaration,
+    pub code: CodeBlock
 }
 
 // variable-assignment = ident, "=", expression, ";" ;
 pub struct VariableAssignment {
-    ident: String,
-    expr: Expression,
+    pub ident: String,
+    pub expr: Expression,
 }
 
 // statement = variable-declaration

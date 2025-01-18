@@ -53,7 +53,7 @@ fn parse_declaration(
             ))
         })
         // Type Definition OR Function Signature
-        .cases([crust.struct_, crust.enum_, crust.union], |tok, cursor| {
+        .cases([crust.struct_, crust.enum_, crust.union], |_, cursor| {
             // back up so we can read type again
             cursor.back_up(1);
             let ty = parse_type(cursor, ctx, crust, report);
@@ -68,7 +68,7 @@ fn parse_declaration(
             // if it is a valid "struct", "ident" format, then we need to back up one, so the ident
             // becomes available
             cursor.back_up(1);
-            let type_decl = parse_type_definition(cursor, ctx, crust, report, tok);
+            let type_decl = parse_type_definition(cursor, ctx, crust, report, ty);
             Some(Declaration::TypeDefinition(type_decl))
         })
         // Type Definition
@@ -163,41 +163,75 @@ fn parse_type_definition(
     ctx: &Context,
     crust: &Crust,
     report: &Report,
-    token: token::Keyword,
+    ty: Type,
 ) -> TypeDefinition {
-    token::switch()
-        .case(crust.struct_, |_, cursor| parse_struct_def(cursor, ctx, crust, report))
-        .case(crust.union, |_, cursor| parse_union_def(cursor, ctx, crust, report))
-        .case(crust.enum_, |_, cursor| parse_enum_def(cursor, ctx, crust, report))
-        .take(cursor, report)
-        .unwrap_or_else(|| unreachable!(":)"))
+    // starts at the brackets (ideally)
+    match ty {
+        Type::Struct(ident) => parse_struct_def(cursor, ctx, crust, report, ident),
+        Type::Union(ident) => parse_union_def(cursor, ctx, crust, report, ident),
+        Type::Enum(ident) => parse_enum_def(cursor, ctx, crust, report, ident),
+        _ => unreachable!(),
+    }
 }
 
+// type-definition = (( "struct", ident, "{", { ident, type-specifier, ";" }, "}" )
 fn parse_struct_def(
     cursor: &mut Cursor,
     ctx: &Context,
     crust: &Crust,
     report: &Report,
+    ident: String,
 ) -> TypeDefinition {
-    todo!()
+    let fields = cursor
+        .take(crust.block, report)
+        .unwrap()
+        .contents()
+        .delimited(crust.semicolon, |tokens| {
+            let ident = tokens.take(crust.ident, report).unwrap();
+            let type_spec = parse_type(tokens, ctx, crust, report);
+            Some((ident.text(ctx).to_string(), type_spec))
+        })
+        .map(|x| x.0)
+        .collect();
+
+    TypeDefinition::StructDef { ident, fields }
 }
 
-fn parse_union_def(
-    cursor: &mut Cursor,
-    ctx: &Context,
-    crust: &Crust,
-    report: &Report,
-) -> TypeDefinition {
-    // This will stay TODO lol
-    todo!()
-}
-
+// | ( "enum",   ident, "{", { ident, type-specifier, "," }, "}" )
 fn parse_enum_def(
     cursor: &mut Cursor,
     ctx: &Context,
     crust: &Crust,
     report: &Report,
+    ident: String,
 ) -> TypeDefinition {
+    let values = cursor
+        .take(crust.block, report)
+        .unwrap()
+        .contents()
+        .delimited(crust.comma, |tokens| {
+            let ident = tokens.take(crust.ident, report).unwrap();
+            let type_opt = match tokens.try_take(crust.comma) {
+                None => Some(parse_type(cursor, ctx, crust, report)),
+                Some(_) => None,
+            };
+            Some((ident.text(ctx).to_string(), type_opt))
+        })
+        .map(|x| x.0)
+        .collect();
+
+    TypeDefinition::EnumDef { ident, values }
+}
+
+// | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
+fn parse_union_def(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+    ident: String,
+) -> TypeDefinition {
+    // This will stay TODO lol
     todo!()
 }
 
@@ -220,6 +254,41 @@ fn parse_function(
     report: &Report,
     ret: Type,
 ) -> Declaration {
+    let ident = cursor.take(crust.ident, report).unwrap();
+
+    let arguments = cursor
+        .take(crust.parens, report)
+        .unwrap()
+        .contents()
+        .delimited(crust.comma, |tokens| {
+            let arg_type = parse_type(tokens, ctx, crust, report);
+            let arg_ident = tokens.take(crust.ident, report).unwrap();
+            Some((arg_type, arg_ident.text(ctx).to_owned()))
+        })
+        .map(|x| x.0)
+        .collect();
+
+    let declaration = FunctionDeclaration {
+        return_type: ret,
+        ident: ident.text(ctx).to_string(),
+        arguments,
+    };
+
+    if let Some(_) = cursor.try_take(crust.semicolon) {
+        return Declaration::FunctionDeclaration(declaration);
+    }
+
+    let code = parse_code_block(cursor, ctx, crust, report);
+
+    Declaration::FunctionDefinition(FunctionDefinition { declaration, code })
+}
+
+fn parse_code_block(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> CodeBlock {
     todo!()
 }
 
@@ -253,7 +322,10 @@ fn parse_typedef(
     let prev = parse_type(cursor, ctx, crust, report);
     let ident = cursor.take(crust.ident, report).unwrap();
 
-    TypeDefinition::TypeDef { old_type: Box::new(prev), alias: ident.text(ctx).to_string() }
+    TypeDefinition::TypeDef {
+        old_type: Box::new(prev),
+        alias: ident.text(ctx).to_string(),
+    }
 }
 
 // pub enum Type {

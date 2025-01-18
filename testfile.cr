@@ -1,4 +1,3 @@
-
 // Hybrid C/Rust style structs
 struct structype {
     my_int i32;
