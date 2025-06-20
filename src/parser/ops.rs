@@ -1,4 +1,5 @@
 
+#[derive(Debug)]
 pub enum BinOp {
 //  '.'
     Access,
@@ -42,6 +43,7 @@ pub enum BinOp {
     Neq
 }
 
+#[derive(Debug)]
 pub enum UnOp {
 //  '*'
     Deref,
@@ -71,6 +73,7 @@ pub enum UnOp {
 //                                "&=",
 //                                "|=",
 //                                "^=" ), expression, ";" ;
+#[derive(Debug)]
 pub enum ShortAssign {
     Add,
     Sub,

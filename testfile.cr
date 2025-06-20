@@ -57,9 +57,10 @@ structype thing_1() {
 
 }
 
-void thing_2() {
+void thing_2(u32 extra, u8 _) {
     u32[4] arr = [1, 2, 3, 4];
     u32* ptr_u32 = (u32*) arr;
+    u8 h = (u8) extra;
 }
 
 // We also get a match expression

@@ -1,13 +1,14 @@
 pub mod ast;
 pub mod ops;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, fmt::Debug};
 
 use ast::*;
 use ilex::{
     token::{self, Cursor, Stream},
     Context, Lexeme, Report, Spanned,
 };
+use owo_colors::OwoColorize;
 
 use crate::lexer::Crust;
 
@@ -24,7 +25,9 @@ pub fn parse(stream: &Stream) -> Result<File, ilex::Fatal> {
         // Find and parse next item, and add to vec
         let decl = parse_declaration(&mut cursor, ctx, crust, &report);
         if let Some(decl) = decl {
+            println!("{:?}", decl);
             file.push(decl);
+            Cursor::take(&mut cursor, crust.semicolon, &report).expect("Must use a semicolon after a declaration");
         }
     }
 
@@ -65,14 +68,12 @@ fn parse_declaration(
                 return Some(parse_function(cursor, ctx, crust, report, ty));
             }
 
-            // if it is a valid "struct", "ident" format, then we need to back up one, so the ident
-            // becomes available
-            cursor.back_up(1);
             let type_decl = parse_type_definition(cursor, ctx, crust, report, ty);
             Some(Declaration::TypeDefinition(type_decl))
         })
         // Type Definition
         .case(crust.typedef, |_, cursor| {
+            println!("HERE");
             Some(Declaration::TypeDefinition(parse_typedef(
                 cursor, ctx, crust, report,
             )))
@@ -187,7 +188,7 @@ fn parse_struct_def(
         .unwrap()
         .contents()
         .delimited(crust.semicolon, |tokens| {
-            let ident = tokens.take(crust.ident, report).unwrap();
+            let ident = tokens.take(crust.ident, report)?;
             let type_spec = parse_type(tokens, ctx, crust, report);
             Some((ident.text(ctx).to_string(), type_spec))
         })
@@ -210,9 +211,9 @@ fn parse_enum_def(
         .unwrap()
         .contents()
         .delimited(crust.comma, |tokens| {
-            let ident = tokens.take(crust.ident, report).unwrap();
+            let ident = tokens.take(crust.ident, report)?;
             let type_opt = match tokens.try_take(crust.comma) {
-                None => Some(parse_type(cursor, ctx, crust, report)),
+                None => Some(parse_type(tokens, ctx, crust, report)),
                 Some(_) => None,
             };
             Some((ident.text(ctx).to_string(), type_opt))
@@ -289,6 +290,7 @@ fn parse_code_block(
     crust: &Crust,
     report: &Report,
 ) -> CodeBlock {
+    return CodeBlock { code: vec![] };
     todo!()
 }
 
@@ -319,8 +321,8 @@ fn parse_typedef(
     crust: &Crust,
     report: &Report,
 ) -> TypeDefinition {
-    let prev = parse_type(cursor, ctx, crust, report);
     let ident = cursor.take(crust.ident, report).unwrap();
+    let prev = parse_type(cursor, ctx, crust, report);
 
     TypeDefinition::TypeDef {
         old_type: Box::new(prev),

@@ -4,6 +4,7 @@ use super::ops::*;
 
 // (* NOTE: Tokens can be found in the spec file *)
 // translation-unit = declaration*
+#[derive(Debug)]
 pub struct File(pub Vec<Declaration>);
 
 // declaration = function-declaration
@@ -11,6 +12,7 @@ pub struct File(pub Vec<Declaration>);
 //             | type-definiton
 //             | static-variable-declaration
 //             ;
+#[derive(Debug)]
 pub enum Declaration {
     TypeDefinition(TypeDefinition),
     FunctionDeclaration(FunctionDeclaration),
@@ -44,7 +46,7 @@ pub enum Declaration {
 //                | tuple-def
 //                | user-type (* pretty sure this is context dependent *)
 //                | type-specifier, "*", (* NOTE: ptrs :) *) ;
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Type {
     U8,
     U16,
@@ -81,6 +83,7 @@ pub enum Type {
 //                  | ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
 //                  | ( "enum",   ident, "{", { ident, type-specifier, "," }, "}" )
 //                  | "typedef", type-specifier, ident ), ";" ;
+#[derive(Debug)]
 pub enum TypeDefinition {
     StructDef {
         ident: String,
@@ -108,6 +111,7 @@ pub enum TypeDefinition {
 //                      | { "&" }, ident
 //                      ) ;
 
+#[derive(Debug)]
 pub enum TypeInstantiation {
     Expr(Expression),
     Array(ArrayInstantiation),
@@ -125,6 +129,7 @@ pub enum TypeInstantiation {
 //       | literal       (* number literal *)
 //       | "(", expression, ")"),;
 
+#[derive(Debug)]
 pub enum Expression {
     // binary-op = expression, binop, expression ;
     BinOp {
@@ -154,6 +159,7 @@ pub enum Expression {
 //         | gaussian-literal (* I'll do these later :( *)
 //         | complex-literal
 //         | bool-literal ;
+#[derive(Debug)]
 pub enum Literal {
     String(String),
     Integer {
@@ -169,27 +175,32 @@ pub enum Literal {
 } 
 
 // array-instantiation = "[", [ type-instantiation ], { ",", type-instantiation }, "]" ;
+#[derive(Debug)]
 pub struct ArrayInstantiation {
     values: Vec<TypeInstantiation>,
 }
 
 // tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
+#[derive(Debug)]
 pub struct TupleInstantiation {
     values: Vec<TypeInstantiation>,
 }
  
 // struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;
+#[derive(Debug)]
 pub struct StructInstantiation {
     fields: Vec<(String, TypeInstantiation)>,
 }
 
 // enum-instantiation   = ident, [ type-instantiation ] ;
+#[derive(Debug)]
 pub struct EnumInstantiation {
     discriminator: String,
     value: Option<Box<TypeInstantiation>>
 }
 
 // pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
+#[derive(Debug)]
 pub enum PointerInstantiation {
     Null,
     Reference {
@@ -203,6 +214,7 @@ pub enum PointerInstantiation {
 // variable-declaration = 
 //     type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;
 
+#[derive(Debug)]
 pub struct VariableDeclaration {
     pub var_type: Type, 
     pub ident: String,
@@ -212,6 +224,7 @@ pub struct VariableDeclaration {
 
 // static-variable-declaration = "static", variable-declaration ;
 
+#[derive(Debug)]
 pub struct StaticVariableDeclaration {
     pub declaration: VariableDeclaration
 }
@@ -221,6 +234,7 @@ pub struct StaticVariableDeclaration {
 //
 // function-declaration = 
 //     function-signature, ";" ;
+#[derive(Debug)]
 pub struct FunctionDeclaration {
     pub return_type: Type,
     pub ident: String,
@@ -229,18 +243,21 @@ pub struct FunctionDeclaration {
 
 // code-block-body = statement* ;
 
+#[derive(Debug)]
 pub struct CodeBlock {
     pub code: Vec<Statement>
 }
 
 // function-definition = function-signature, code-block-body ;
 
+#[derive(Debug)]
 pub struct FunctionDefinition {
     pub declaration: FunctionDeclaration,
     pub code: CodeBlock
 }
 
 // variable-assignment = ident, "=", expression, ";" ;
+#[derive(Debug)]
 pub struct VariableAssignment {
     pub ident: String,
     pub expr: Expression,
@@ -255,6 +272,7 @@ pub struct VariableAssignment {
 //           | return-statement
 //           | match-statement
 //           | if-let-statement ;
+#[derive(Debug)]
 pub enum Statement {
     VariableDeclaration(VariableDeclaration),
     VariableAssignment(VariableAssignment),
@@ -306,6 +324,7 @@ pub enum Statement {
 }
 
 // match-clause     = type-instantiation, ":", "{", code-block-body, "}", "," ;
+#[derive(Debug)]
 pub struct MatchClause {
     pattern: TypeInstantiation,
     code: CodeBlock

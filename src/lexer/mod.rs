@@ -277,11 +277,14 @@ pub struct Crust {
         .prefixes('_'..='_')
         )]
     pub ident: Lexeme<Ident>,
-    // #[named]
-    // #[rule(Digital::new(10)
-    //     .separator('_')
-    //     .minus()
-    //     .point_limit(0..2)
-    //     .exponents(["e", "E"], Digits::new(10).plus().minus()))]
-    // float_literal: Lexeme<Digital>,
+
+    #[named]
+    #[rule(Digital::new(10)
+        .separator('_')
+        .minus()
+        .point_limit(0..2)
+        .prefixes('0'..='9')
+        .separator('_')
+        .exponents(["e", "E"], Digits::new(10).plus().minus()))]
+    float_literal: Lexeme<Digital>,
 }

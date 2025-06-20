@@ -5,6 +5,7 @@ pub mod parser;
 use ilex::token::Cursor;
 use ilex::Spanned;
 use owo_colors::{colors::{css::{Brown, Gold, Gray}, Blue, Green, Red}, OwoColorize};
+use parser::parse;
 
 use crate::lexer::Crust;
 
@@ -17,7 +18,9 @@ fn main() {
     let file = ctx.open_file(file, &report).unwrap();
     let tokens = file.lex(Crust::get().spec(), &report).unwrap();
 
-    print_tree(tokens.cursor(), &ctx, 0);
+    // print_tree(tokens.cursor(), &ctx, 0);
+    let tree = parse(&tokens);
+    println!("{tree:?}");
     // let cursor = tokens.cursor();
 }
 
