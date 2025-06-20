@@ -76,6 +76,8 @@ pub enum Type {
     Struct(String),
     Enum(String),
     Union(String),
+    // Typedef'd ident
+    Ident(String),
     Pointer(Box<Type>),
 }
 
@@ -183,7 +185,7 @@ pub struct ArrayInstantiation {
 // tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
 #[derive(Debug)]
 pub struct TupleInstantiation {
-    values: Vec<TypeInstantiation>,
+    pub values: Vec<TypeInstantiation>,
 }
  
 // struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;

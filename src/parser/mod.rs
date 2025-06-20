@@ -27,7 +27,8 @@ pub fn parse(stream: &Stream) -> Result<File, ilex::Fatal> {
         if let Some(decl) = decl {
             println!("{:?}", decl);
             file.push(decl);
-            Cursor::take(&mut cursor, crust.semicolon, &report).expect("Must use a semicolon after a declaration");
+            Cursor::take(&mut cursor, crust.semicolon, &report)
+                .expect("Must use a semicolon after a declaration");
         }
     }
 
@@ -73,7 +74,6 @@ fn parse_declaration(
         })
         // Type Definition
         .case(crust.typedef, |_, cursor| {
-            println!("HERE");
             Some(Declaration::TypeDefinition(parse_typedef(
                 cursor, ctx, crust, report,
             )))
@@ -132,15 +132,50 @@ fn parse_declaration(
     Some(decl)
 }
 
-// pub struct StaticVariableDeclaration {
-//     pub declaration: VariableDeclaration
-// }
+// variable-declaration =
+//     type-specifier, ident [ "=", type-instantiation ], { ",", ident, [ "=", type-instantiation ] }, ";" ;
+// NOTE: Extra is unimplemented right now.
 fn parse_variable_declaration(
     cursor: &mut Cursor,
     ctx: &Context,
     crust: &Crust,
     report: &Report,
 ) -> VariableDeclaration {
+    let var_type = parse_type(cursor, ctx, crust, report);
+    let ident = cursor.take(crust.ident, report).unwrap().text(ctx).to_string();
+    match cursor.peek(crust.semicolon) {
+        None => {
+            cursor.take(crust.equals, report).unwrap();
+            let type_instantiation = parse_type_instantiation(cursor, ctx, crust, report);
+            VariableDeclaration {
+                var_type,
+                ident,
+                definition: Some(type_instantiation),
+                extra: vec![],
+            }
+        }
+        Some(_) => VariableDeclaration {
+            var_type,
+            ident,
+            definition: None,
+            extra: vec![],
+        },
+    }
+}
+
+// type-instantiation = ( expression
+//                      | array-instantiation
+//                      | tuple-instantiation
+//                      | struct-instantiation
+//                      | enum-instantiation
+//                      | { "&" }, ident
+//                      ) ;
+fn parse_type_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> TypeInstantiation {
     todo!()
 }
 
@@ -454,6 +489,9 @@ fn parse_type(cursor: &mut Cursor, ctx: &Context, crust: &Crust, report: &Report
             } else {
                 panic!()
             }
+        })
+        .case(crust.ident, |ident, _| {
+            Type::Ident(ident.text(ctx).to_string())
         })
         .take(cursor, report)
         .unwrap_or_else(|| unreachable!(":)"));

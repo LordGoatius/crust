@@ -147,7 +147,7 @@ pub struct Crust {
     pub geq: Lexeme<Keyword>,
 
     #[rule("==")]
-    pub equals: Lexeme<Keyword>,
+    pub eq: Lexeme<Keyword>,
 
     #[rule("!=")]
     pub not_eq: Lexeme<Keyword>,
@@ -247,7 +247,7 @@ pub struct Crust {
     pub void: Lexeme<Keyword>,
 
     #[rule("=")]
-    pub eq: Lexeme<Keyword>,
+    pub equals: Lexeme<Keyword>,
     #[rule("+=")]
     pub add_eq: Lexeme<Keyword>,
     #[rule("-=")]
