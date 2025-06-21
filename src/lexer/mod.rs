@@ -203,6 +203,9 @@ pub struct Crust {
     #[rule("let")]
     pub let_: Lexeme<Keyword>,
 
+    #[rule("null")]
+    pub null: Lexeme<Keyword>,
+
     #[rule("u8")]
     pub u8: Lexeme<Keyword>,
     #[rule("u16")]

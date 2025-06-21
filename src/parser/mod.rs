@@ -142,7 +142,11 @@ fn parse_variable_declaration(
     report: &Report,
 ) -> VariableDeclaration {
     let var_type = parse_type(cursor, ctx, crust, report);
-    let ident = cursor.take(crust.ident, report).unwrap().text(ctx).to_string();
+    let ident = cursor
+        .take(crust.ident, report)
+        .unwrap()
+        .text(ctx)
+        .to_string();
     match cursor.peek(crust.semicolon) {
         None => {
             cursor.take(crust.equals, report).unwrap();
@@ -176,6 +180,120 @@ fn parse_type_instantiation(
     crust: &Crust,
     report: &Report,
 ) -> TypeInstantiation {
+    token::switch()
+        // Add some cases here:
+        // But
+        // How to handle parentheses vs tuples?
+        // It's gotta be the comma, right?
+        // I think there's just ambiguity here :pensive:
+        .case(crust.parens, |parens, _| {
+            TypeInstantiation::Tuple(parse_tuple_instantiation(
+                &mut parens.contents(),
+                ctx,
+                crust,
+                report,
+            ))
+        })
+        .case(crust.array, |brackets, _| {
+            TypeInstantiation::Array(parse_array_instantiation(
+                &mut brackets.contents(),
+                ctx,
+                crust,
+                report,
+            ))
+        })
+        .case(crust.block, |braces, _| {
+            TypeInstantiation::Struct(parse_struct_instantiation(
+                &mut braces.contents(),
+                ctx,
+                crust,
+                report,
+            ))
+        })
+        .case(crust.null, |_, cursor| {
+            TypeInstantiation::Pointer(PointerInstantiation::Null)
+        })
+        .case(crust.and, |_, cursor| {
+            // So the pointer can be instantiated.
+            cursor.back_up(1);
+            TypeInstantiation::Pointer(parse_pointer_instantiation(cursor, ctx, crust, report))
+        })
+        // We have enum instantation and expression left
+        // Big expression will never have parentheses around it
+        .take(cursor, report)
+        .unwrap_or_else(|| unreachable!(":)"))
+}
+
+// tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
+fn parse_tuple_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> TupleInstantiation {
+    TupleInstantiation {
+        values: cursor
+            .delimited(crust.comma, |cursor| {
+                Some(parse_type_instantiation(cursor, ctx, crust, report))
+            })
+            .map(|x| x.0)
+            .collect(),
+    }
+}
+
+// array-instantiation = "[", [ type-instantiation ], { ",", type-instantiation }, "]" ;
+fn parse_array_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> ArrayInstantiation {
+    todo!()
+}
+
+// struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;
+fn parse_struct_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> StructInstantiation {
+    todo!()
+}
+
+// pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
+fn parse_pointer_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> PointerInstantiation {
+    todo!()
+}
+
+// enum-instantiation   = ident, [ type-instantiation ] ;
+fn parse_enum_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> EnumInstantiation {
+    todo!()
+}
+
+// expression = ( binary-op
+//       | unary-op
+//       | ident
+//       | function-call
+//       | conditional   (* conditionals are binops or unops, so ignore *)
+//       | literal       (* number literal *)
+//       | "(", expression, ")" ),;
+fn parse_expression_instantiation(
+    cursor: &mut Cursor,
+    ctx: &Context,
+    crust: &Crust,
+    report: &Report,
+) -> Expression {
     todo!()
 }
 
