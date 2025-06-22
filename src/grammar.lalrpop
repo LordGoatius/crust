@@ -12,22 +12,10 @@ Decl: Declaration = {
     StaticVarDeclaration => Declaration::StaticVariableDeclaration(<>),
 }
 
-// static-variable-declaration = "static", variable-declaration ;
 StaticVarDeclaration: StaticVariableDeclaration = {
     "static" <VarDecl> => StaticVariableDeclaration{ declaration: <> },
 }
 
-// variable-declaration = 
-//     type-specifier,
-//     ident [ "=", type-instantiation ],
-//     { ",", ident, [ "=", type-instantiation ] }, ";" ;
-
-// pub struct VariableDeclaration {
-//     pub var_type: Type, 
-//     pub ident: String,
-//     pub definition: Option<TypeInstantiation>,
-//     pub extra: Vec<(String, Option<TypeInstantiation>)>
-// }
 VarDecl: VariableDeclaration = {
     <var_type:Ty> <ident:Ident> <definition:("=" <TypeInstance>)?> => VariableDeclaration {
         var_type,
@@ -36,49 +24,81 @@ VarDecl: VariableDeclaration = {
     },
 }
 
-// type-instantiation = ( expression
-//                      | array-instantiation
-//                      | tuple-instantiation
-//                      | struct-instantiation
-//                      | enum-instantiation
-//                      | { "&" }, ident
-//                      ) ;
-// #[derive(Debug)]
-// pub enum TypeInstantiation {
-//     Expr(Expression),
-//     Array(ArrayInstantiation),
-//     Tuple(TupleInstantiation),
-//     Struct(StructInstantiation),
-//     Enum(EnumInstantiation),
-//     Pointer(PointerInstantiation)
-// }
 TypeInstance: TypeInstantiation = {
     ArrayInstantiation => TypeInstantiation::Array(<>),
-    // NOTE: TEMPORARY
-    Number => TypeInstantiation::Expr(Expression::Literal(Literal::Integer { sign: false, num: <>})),
     TupleInstantiation => TypeInstantiation::Tuple(<>),
     StructInstantiation => TypeInstantiation::Struct(<>),
     EnumInstantiation => TypeInstantiation::Enum(<>),
-//    PointerInstantiation => TypeInstantiation::Pointer(<>),
+    OuterExpr => TypeInstantiation::Expr(<>),
 }
-// pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
-// pub enum PointerInstantiation {
-//     Null,
-//     Reference {
-//         ident: String,
-//     },
-//     Value {
-//         value: usize
-//     }
-// }
 
-PtrInstantiation: PointerInstantiation = {
-    "null" => PointerInstantiation::Null,
-    Number => PointerInstantiation::Value { value: <> },
-    <l:"&"+> <i:Ident> => PointerInstantiation::Reference {
-        ident: i,
-        num: l.len(),
-    }
+// pub enum Expression {
+//     // binary-op = expression, binop, expression ;
+//     BinOp {
+//         operation: BinOp,
+//         left: Box<Expression>,
+//         right: Box<Expression>,
+//     },
+//     // unary-op  = unop, ( ident | literal )
+//     //           | unop, "(", expression, ")" ;
+//     UnOp {
+//         operation: UnOp,
+//         operand: Box<Expression>
+//     },
+//     Ident(String),
+//     // function-call = ident, "(", [ expression ], { ",", expression }, ")" ;
+//     FunctionCall {
+//         name: String,
+//         arguments: Vec<Expression>
+//     },
+// }
+OuterExpr: Expression = {
+    Literal => Expression::Literal(<>),
+    <e1:Expr> <o:BinOp> <e2:Expr> => Expression::BinOp {
+        operation: o,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+}
+
+Expr: Expression = {
+    OuterExpr => <>,
+    "(" <Expr> ")" => <>,
+}
+
+BinOp: BinOp = {
+    "." => BinOp::Access,
+    "->" => BinOp::PtrAccess,
+    "+" => BinOp::Add,
+    "_" => BinOp::Sub,
+    "*" => BinOp::Mul,
+    "/" => BinOp::Div,
+    "%" => BinOp::Mod,
+    "&" => BinOp::And,
+    "|" => BinOp::Or,
+    "^" => BinOp::Xor,
+    "&&" => BinOp::LogAnd,
+    "||" => BinOp::LogOr,
+    ">>" => BinOp::Shr,
+    "<<" => BinOp::Shl,
+    ">" => BinOp::Gt,
+    "<" => BinOp::Lt,
+    ">=" => BinOp::Geq,
+    "<=" => BinOp::Leq,
+    "==" => BinOp::Eq,
+    "!=" => BinOp::Neq,
+}
+
+// pub enum Literal {
+//     Float {
+//         num: f64
+//     },
+// } 
+Literal: Literal = {
+    r#""""# => Literal::String(String::new()),
+    Number => Expression::Literal(Literal::Integer { sign: false, num: <> }),
+    "true" => Literal::Bool(true),
+    "false" => Literal::Bool(false),
 }
 
 EnumInstantiation: EnumInstantiation = {

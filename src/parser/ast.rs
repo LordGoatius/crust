@@ -120,7 +120,6 @@ pub enum TypeInstantiation {
     Tuple(TupleInstantiation),
     Struct(StructInstantiation),
     Enum(EnumInstantiation),
-    Pointer(PointerInstantiation)
 }
 
 // expression = ( binary-op
@@ -169,7 +168,6 @@ pub enum Literal {
         num: usize,
     },
     Float {
-        sign: bool,
         num: f64
     },
     Bool(bool),
@@ -206,7 +204,7 @@ pub struct EnumInstantiation {
 pub enum PointerInstantiation {
     Null,
     Reference {
-        ident: String,
+        ident: Box<TypeInstantiation>,
         num: usize
     },
     Value {
