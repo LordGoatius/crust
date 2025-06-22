@@ -1,4 +1,4 @@
-use ilex::rule::Sign;
+// use ilex::rule::Sign;
 
 use super::ops::*;
 
@@ -165,11 +165,11 @@ pub enum Expression {
 pub enum Literal {
     String(String),
     Integer {
-        sign: Sign,
+        sign: bool,
         num: usize,
     },
     Float {
-        sign: Sign,
+        sign: bool,
         num: f64
     },
     Bool(bool),

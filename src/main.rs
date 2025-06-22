@@ -13,6 +13,19 @@ lalrpop_mod!(pub grammar);
 // use crate::lexer::Crust;
 
 fn main() {
+    let str =
+"
+struct structype { my_int i32;
+    my_fl f64;
+};
+enum int_opt {
+    some: i32,
+    left: struct ident*,
+    none,
+};
+typedef struct structype** ppstrty;
+";
+
     let ast1= grammar::CustomTypeDefinitionParser::new()
         .parse("typedef struct mystr** pmystr");
     let ast2= grammar::CustomTypeDefinitionParser::new()
@@ -21,10 +34,15 @@ fn main() {
         .parse("12_34");
     let arr = grammar::TyParser::new()
         .parse("struct mything[4][5][7]");
+
+    let file= grammar::FileParser::new()
+        .parse(str);
+
     println!("{ast1:?}");
     println!("{ast2:?}");
     println!("{num:?}");
     println!("{arr:?}");
+    println!("{file:#?}");
     return;
     // let file = std::env::args().nth(1).unwrap();
 
