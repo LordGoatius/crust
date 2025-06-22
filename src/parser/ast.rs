@@ -72,7 +72,7 @@ pub enum Type {
     // tuple-def = "(", [ type-specifier ], { ",", type-specifier }, ")", ";" ;
     Tuple(Vec<Type>),
     // array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
-    Array(Box<Type>, usize),
+    Array(Box<Type>, Vec<usize>),
     Struct(String),
     Enum(String),
     Union(String),

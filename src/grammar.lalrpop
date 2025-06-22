@@ -1,0 +1,85 @@
+use crate::parser::ast::*;
+use std::str::FromStr;
+
+grammar;
+
+pub CustomTypeDefinition: TypeDefinition = {
+    "typedef" <ty:Ty> <alias:Ident> => TypeDefinition::TypeDef { old_type: Box::new(ty), alias },
+    "struct" <ident:Ident> "{" <fields:InnerStruct> "}" => TypeDefinition::StructDef { ident, fields },
+    "enum" <ident:Ident> "{" <values:InnerEnum> "}" => TypeDefinition::EnumDef { ident, values },
+    // "union" <ident:Ident> "{" <fields:InnerUnion> "}" => TypeDefinition::UnionDef { ident, fields },
+}
+
+// ( "union",  ident, "{", { ident, type-specifier, ";" }, "}" )
+// { ident, type-specifier, ";" }
+InnerStruct: Vec<(String, Type)> = {
+    <mut v:(<Ident> <Ty> ";")*> => v,
+}
+
+// ( "enum",   ident, "{", { ident, type-specifier, "," }, "}" )
+// { ident, type-specifier, ";" }
+InnerUnion: Vec<(String, Type)> = {
+    <v:(<Ident> <Ty> ";")*> => v,
+}
+
+InnerEnum: Vec<(String, Option<Type>)> = {
+    <v:(<Ident> <Ty?> ";")*> => v,
+}
+
+Ty: Type = {
+    "u8" => Type::U8,
+    "u16" => Type::U16,
+    "u32" => Type::U32,
+    "u64" => Type::U64,
+    "usize" => Type::USize,
+    "i8" => Type::I8,
+    "i16" => Type::I16,
+    "i32" => Type::I32,
+    "i64" => Type::I64,
+    "isize" => Type::ISize,
+    "z8" => Type::Z8,
+    "z16" => Type::Z16,
+    "z32" => Type::Z32,
+    "z64" => Type::Z64,
+    "zsize" => Type::ZSize,
+    "f32" => Type::F32,
+    "f64" => Type::F64,
+    "c32" => Type::C32,
+    "c64" => Type::C64,
+    "bool" => Type::Bool,
+    "void" => Type::Void,
+    "struct" <i:Ident> => Type::Struct(i),
+    "enum" <i:Ident> => Type::Enum(i),
+    "union" <i:Ident> => Type::Union(i),
+    "(" <v:TupleInner> ")" => Type::Tuple(v),
+    <t:Ty> <a:ArrayDef> => Type::Array(t, a),
+    // Note: For Typedef
+    Ident => Type::Ident(<>),
+    <t:Ty> "*" => Type::Pointer(Box::new(t)),
+}
+
+// array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
+#[inline]
+ArrayDef: Vec<usize> = {
+    ("[" <Number> "]")+ => <>,
+}
+
+// ArraySize: Vec<usize> = {
+//
+// }
+
+// tuple-def = [ type-specifier ], { ",", type-specifier }, ")", ";" ;
+TupleInner: Vec<Type> = {
+    <mut v:(<Ty> ",")*> <e:Ty?> => match e {
+    None => v,
+        Some(e) => { v.push(e); v }
+    }
+}
+
+Ident: String = <s:r"(?:_a-zA-Z)\w*"> => s.to_owned();
+// Fix Later Number: usize = <s:r"(?:(?:0b[01][01_]+)|(?:0o[0-7][0-7_]+)|(?:0x[0-9a-fA-F][0-9a-fA-F_]+)|(?:[0-9][0-9_]+))"> => s.parse().expect("Invalid integer literal");
+pub Number: usize = <s:r"\d(?:0-9_)*"> => s.chars()
+    .filter(|&c| char::is_numeric(c))
+    .collect::<String>()
+    .parse()
+    .expect("Invalid integer literal");

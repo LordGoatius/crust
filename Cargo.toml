@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 ilex = "0.6.0"
 owo-colors = "4.1.0"
-# lalrpop-util = { version = "0.21.0", features = ["lexer", "unicode"] }
+lalrpop-util = { version = "0.21.0", features = ["lexer", "unicode"] }
 
 [build-dependencies]
-# lalrpop = "0.22.2"
+lalrpop = "0.22.2"
