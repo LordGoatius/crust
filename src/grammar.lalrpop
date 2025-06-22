@@ -9,6 +9,117 @@ pub File: File = {
 
 Decl: Declaration = {
     CustomTypeDefinition => Declaration::TypeDefinition(<>),
+    StaticVarDeclaration => Declaration::StaticVariableDeclaration(<>),
+}
+
+// static-variable-declaration = "static", variable-declaration ;
+StaticVarDeclaration: StaticVariableDeclaration = {
+    "static" <VarDecl> => StaticVariableDeclaration{ declaration: <> },
+}
+
+// variable-declaration = 
+//     type-specifier,
+//     ident [ "=", type-instantiation ],
+//     { ",", ident, [ "=", type-instantiation ] }, ";" ;
+
+// pub struct VariableDeclaration {
+//     pub var_type: Type, 
+//     pub ident: String,
+//     pub definition: Option<TypeInstantiation>,
+//     pub extra: Vec<(String, Option<TypeInstantiation>)>
+// }
+VarDecl: VariableDeclaration = {
+    <var_type:Ty> <ident:Ident> <definition:("=" <TypeInstance>)?> => VariableDeclaration {
+        var_type,
+        ident,
+        definition,
+    },
+}
+
+// type-instantiation = ( expression
+//                      | array-instantiation
+//                      | tuple-instantiation
+//                      | struct-instantiation
+//                      | enum-instantiation
+//                      | { "&" }, ident
+//                      ) ;
+// #[derive(Debug)]
+// pub enum TypeInstantiation {
+//     Expr(Expression),
+//     Array(ArrayInstantiation),
+//     Tuple(TupleInstantiation),
+//     Struct(StructInstantiation),
+//     Enum(EnumInstantiation),
+//     Pointer(PointerInstantiation)
+// }
+TypeInstance: TypeInstantiation = {
+    ArrayInstantiation => TypeInstantiation::Array(<>),
+    // NOTE: TEMPORARY
+    Number => TypeInstantiation::Expr(Expression::Literal(Literal::Integer { sign: false, num: <>})),
+    TupleInstantiation => TypeInstantiation::Tuple(<>),
+    StructInstantiation => TypeInstantiation::Struct(<>),
+    EnumInstantiation => TypeInstantiation::Enum(<>),
+//    PointerInstantiation => TypeInstantiation::Pointer(<>),
+}
+// pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
+// pub enum PointerInstantiation {
+//     Null,
+//     Reference {
+//         ident: String,
+//     },
+//     Value {
+//         value: usize
+//     }
+// }
+
+PtrInstantiation: PointerInstantiation = {
+    "null" => PointerInstantiation::Null,
+    Number => PointerInstantiation::Value { value: <> },
+    <l:"&"+> <i:Ident> => PointerInstantiation::Reference {
+        ident: i,
+        num: l.len(),
+    }
+}
+
+EnumInstantiation: EnumInstantiation = {
+    <s:Ident> <t:(":" <TypeInstance>)?> => EnumInstantiation {
+        discriminator: s,
+        value: t.map(|x| Box::new(x)),
+    },
+}
+
+StructInstantiation: StructInstantiation = {
+    "{" <fields:(<Ident> "=" <TypeInstance>)*> "}" => StructInstantiation {
+        fields
+    }
+}
+
+TupleInstantiation : TupleInstantiation = {
+    "(" <n:TypeInstance> <v:(";" <TypeInstance>)+?> ")" => {
+        match v {
+            None => TupleInstantiation { values: vec![n] },
+            Some(mut v) => {
+                v.push(n);
+                TupleInstantiation {
+                    values: v                    
+                }
+            },
+        }
+    }
+}
+
+ArrayInstantiation: ArrayInstantiation = {
+    "[" <n:TypeInstance> <v:("," <TypeInstance>)+?> "]" => {
+        match v {
+            None => ArrayInstantiation { values: vec![n] },
+            Some(mut v) => {
+                v.push(n);
+                ArrayInstantiation {
+                    values: v                    
+                }
+            },
+        }
+    }
 }
 
 pub CustomTypeDefinition: TypeDefinition = {

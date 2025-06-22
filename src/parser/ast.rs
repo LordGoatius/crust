@@ -179,7 +179,7 @@ pub enum Literal {
 // array-instantiation = "[", [ type-instantiation ], { ",", type-instantiation }, "]" ;
 #[derive(Debug)]
 pub struct ArrayInstantiation {
-    values: Vec<TypeInstantiation>,
+    pub values: Vec<TypeInstantiation>,
 }
 
 // tuple-instantiation = "(", [ type-instantiation ], { ",", type-instantiation }, ")" ;
@@ -191,14 +191,14 @@ pub struct TupleInstantiation {
 // struct-instantiation = "{", { ident, "=", type-instantiation }, "}" ;
 #[derive(Debug)]
 pub struct StructInstantiation {
-    fields: Vec<(String, TypeInstantiation)>,
+    pub fields: Vec<(String, TypeInstantiation)>,
 }
 
 // enum-instantiation   = ident, [ type-instantiation ] ;
 #[derive(Debug)]
 pub struct EnumInstantiation {
-    discriminator: String,
-    value: Option<Box<TypeInstantiation>>
+    pub discriminator: String,
+    pub value: Option<Box<TypeInstantiation>>
 }
 
 // pointer-instantiation = "null" | ( "&", ident ) | int-literal ;
@@ -207,6 +207,7 @@ pub enum PointerInstantiation {
     Null,
     Reference {
         ident: String,
+        num: usize
     },
     Value {
         value: usize
@@ -221,7 +222,7 @@ pub struct VariableDeclaration {
     pub var_type: Type, 
     pub ident: String,
     pub definition: Option<TypeInstantiation>,
-    pub extra: Vec<(String, Option<TypeInstantiation>)>
+    // pub extra: Vec<(String, Option<TypeInstantiation>)>
 }
 
 // static-variable-declaration = "static", variable-declaration ;
