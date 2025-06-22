@@ -26,7 +26,14 @@ InnerEnum: Vec<(String, Option<Type>)> = {
     <v:(<Ident> <Ty?> ";")*> => v,
 }
 
-Ty: Type = {
+pub Ty: Type = {
+    NonArrType => <>,
+    "(" <v:TupleInner> ")" => Type::Tuple(v),
+    <t:NonArrType> <a:ArrayDef> => Type::Array(Box::new(t), a),
+    // Note: For Typedef
+}
+
+NonArrType: Type = {
     "u8" => Type::U8,
     "u16" => Type::U16,
     "u32" => Type::U32,
@@ -51,15 +58,12 @@ Ty: Type = {
     "struct" <i:Ident> => Type::Struct(i),
     "enum" <i:Ident> => Type::Enum(i),
     "union" <i:Ident> => Type::Union(i),
-    "(" <v:TupleInner> ")" => Type::Tuple(v),
-    <t:Ty> <a:ArrayDef> => Type::Array(t, a),
-    // Note: For Typedef
+    // Pointer may be moved and changed occasionally
+    <t:NonArrType> "*" => Type::Pointer(Box::new(t)),
     Ident => Type::Ident(<>),
-    <t:Ty> "*" => Type::Pointer(Box::new(t)),
 }
 
 // array-def = type-specifier, [ "[", number, "]", ], { "[", number, "]", };
-#[inline]
 ArrayDef: Vec<usize> = {
     ("[" <Number> "]")+ => <>,
 }
@@ -76,9 +80,9 @@ TupleInner: Vec<Type> = {
     }
 }
 
-Ident: String = <s:r"(?:_a-zA-Z)\w*"> => s.to_owned();
+Ident: String = <s:r"[_a-zA-Z][_a-zA-Z0-9]*"> => s.to_owned();
 // Fix Later Number: usize = <s:r"(?:(?:0b[01][01_]+)|(?:0o[0-7][0-7_]+)|(?:0x[0-9a-fA-F][0-9a-fA-F_]+)|(?:[0-9][0-9_]+))"> => s.parse().expect("Invalid integer literal");
-pub Number: usize = <s:r"\d(?:0-9_)*"> => s.chars()
+pub Number: usize = <s:r"[0-9][0-9_]*"> => s.chars()
     .filter(|&c| char::is_numeric(c))
     .collect::<String>()
     .parse()

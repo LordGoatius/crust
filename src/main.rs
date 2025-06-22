@@ -5,7 +5,7 @@ pub mod parser;
 // use ilex::token::Cursor;
 // use ilex::Spanned;
 use lalrpop_util::lalrpop_mod;
-use owo_colors::{colors::{css::{Brown, Gold, Gray}, Blue, Green, Red}, OwoColorize};
+// use owo_colors::{colors::{css::{Brown, Gold, Gray}, Blue, Green, Red}, OwoColorize};
 // use parser::parse;
 
 lalrpop_mod!(pub grammar);
@@ -19,9 +19,12 @@ fn main() {
         .parse("struct structype { my_int i32; my_fl f64; }");
     let num = grammar::NumberParser::new()
         .parse("12_34");
+    let arr = grammar::TyParser::new()
+        .parse("struct mything[4][5][7]");
     println!("{ast1:?}");
     println!("{ast2:?}");
     println!("{num:?}");
+    println!("{arr:?}");
     return;
     // let file = std::env::args().nth(1).unwrap();
 
