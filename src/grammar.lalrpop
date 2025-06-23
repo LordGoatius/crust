@@ -29,16 +29,10 @@ TypeInstance: TypeInstantiation = {
     TupleInstantiation => TypeInstantiation::Tuple(<>),
     StructInstantiation => TypeInstantiation::Struct(<>),
     EnumInstantiation => TypeInstantiation::Enum(<>),
-    OuterExpr => TypeInstantiation::Expr(<>),
+    Expr => TypeInstantiation::Expr(<>),
 }
 
 // pub enum Expression {
-//     // binary-op = expression, binop, expression ;
-//     BinOp {
-//         operation: BinOp,
-//         left: Box<Expression>,
-//         right: Box<Expression>,
-//     },
 //     // unary-op  = unop, ( ident | literal )
 //     //           | unop, "(", expression, ")" ;
 //     UnOp {
@@ -52,41 +46,127 @@ TypeInstance: TypeInstantiation = {
 //         arguments: Vec<Expression>
 //     },
 // }
-OuterExpr: Expression = {
+Expr: Expression = {
+    #[precedence(level="0")]
     Literal => Expression::Literal(<>),
-    <e1:Expr> <o:BinOp> <e2:Expr> => Expression::BinOp {
+    "(" <Expr> ")" => <>,
+    <o:UnOp> <e:Expr> => Expression::UnOp {
         operation: o,
+        operand: Box::new(e),
+    },
+    #[precedence(level="1")] #[assoc(side="left")]
+    <e1:Expr> "." <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Access,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    #[precedence(level="2")] #[assoc(side="left")]
+    <e1:Expr> "*" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Mul,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "/" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Div,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "%" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Mod,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "+" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Add,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "-" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Sub,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    #[precedence(level="4")] #[assoc(side="left")]
+    <e1:Expr> "&" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::And,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "|" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Or,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "^" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Xor,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "&&" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::LogAnd,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "||" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::LogOr,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> ">>" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Shr,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "<<" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Shl,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> ">" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Gt,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "<" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Lt,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> ">=" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Geq,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "<=" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Leq,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "==" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Eq,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "!=" <e2:Expr> => Expression::BinOp {
+        operation: BinOp::Neq,
+        left: Box::new(e1),
+        right: Box::new(e2),
+    },
+    <e1:Expr> "->"<e2:Expr> => Expression::BinOp {
+        operation: BinOp::PtrAccess,
         left: Box::new(e1),
         right: Box::new(e2),
     },
 }
 
-Expr: Expression = {
-    OuterExpr => <>,
-    "(" <Expr> ")" => <>,
-}
+UnOp: UnOp = {
+    "*" => UnOp::Deref,
+    "&" => UnOp::Ref,
+    "++" => UnOp::Inc,
+    "--" => UnOp::Dec,
+    "~" => UnOp::Not,
+    "!" => UnOp::LogNot,
 
-BinOp: BinOp = {
-    "." => BinOp::Access,
-    "->" => BinOp::PtrAccess,
-    "+" => BinOp::Add,
-    "_" => BinOp::Sub,
-    "*" => BinOp::Mul,
-    "/" => BinOp::Div,
-    "%" => BinOp::Mod,
-    "&" => BinOp::And,
-    "|" => BinOp::Or,
-    "^" => BinOp::Xor,
-    "&&" => BinOp::LogAnd,
-    "||" => BinOp::LogOr,
-    ">>" => BinOp::Shr,
-    "<<" => BinOp::Shl,
-    ">" => BinOp::Gt,
-    "<" => BinOp::Lt,
-    ">=" => BinOp::Geq,
-    "<=" => BinOp::Leq,
-    "==" => BinOp::Eq,
-    "!=" => BinOp::Neq,
 }
 
 // pub enum Literal {
@@ -115,7 +195,7 @@ StructInstantiation: StructInstantiation = {
 }
 
 TupleInstantiation : TupleInstantiation = {
-    "(" <n:TypeInstance> <v:(";" <TypeInstance>)+?> ")" => {
+    "<" <n:TypeInstance> <v:(";" <TypeInstance>)+?> ">" => {
         match v {
             None => TupleInstantiation { values: vec![n] },
             Some(mut v) => {
@@ -142,7 +222,7 @@ ArrayInstantiation: ArrayInstantiation = {
     }
 }
 
-pub CustomTypeDefinition: TypeDefinition = {
+CustomTypeDefinition: TypeDefinition = {
     "typedef" <ty:Ty> <alias:Ident> => TypeDefinition::TypeDef { old_type: Box::new(ty), alias },
     "struct" <ident:Ident> "{" <fields:InnerStruct> "}" => TypeDefinition::StructDef { ident, fields },
     "enum" <ident:Ident> "{" <values:InnerEnum> "}" => TypeDefinition::EnumDef { ident, values },

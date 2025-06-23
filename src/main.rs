@@ -25,10 +25,6 @@ enum int_opt {
 typedef struct structype** ppstrty;
 ";
 
-    let ast1 = grammar::CustomTypeDefinitionParser::new().parse("typedef struct mystr** pmystr");
-    let ast2 = grammar::CustomTypeDefinitionParser::new()
-        .parse("struct structype { my_int i32; my_fl f64; }");
-    let num = grammar::NumberParser::new().parse("12_34");
     let arr = grammar::TyParser::new().parse("struct mything[4][5][7]");
 
     let file = grammar::FileParser::new().parse(str);
@@ -39,9 +35,6 @@ typedef struct structype** ppstrty;
              static (struct tup, le) name = (7; 6; 13);",
     );
 
-    ast1.unwrap();
-    ast2.unwrap();
-    num.unwrap();
     arr.unwrap();
     file.unwrap();
     file2.unwrap();
