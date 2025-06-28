@@ -31,12 +31,17 @@ typedef struct structype** ppstrty;
 
     let file2 = grammar::FileParser::new().parse(
         "static i64[7] thing = [1, 2, 4, 5];
-             static (i32, usize) thing;
-             static (struct tup, le) name = (7; 6; 13);",
+         static (i32, usize) thing;
+         static (struct tup, le) name = <7; 6; 13>;",
+    );
+
+    let file3 = grammar::FileParser::new().parse(
+        "static usize thing = (17 ({ident}() (twelve) -) +);"
     );
 
     arr.unwrap();
     file.unwrap();
     file2.unwrap();
+    dbg!(file3.unwrap());
     return;
 }

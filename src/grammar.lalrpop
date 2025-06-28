@@ -1,4 +1,5 @@
 use crate::parser::ast::*;
+use crate::parser::ops::*;
 use std::str::FromStr;
 
 grammar;
@@ -13,7 +14,7 @@ Decl: Declaration = {
 }
 
 StaticVarDeclaration: StaticVariableDeclaration = {
-    "static" <VarDecl> => StaticVariableDeclaration{ declaration: <> },
+    "static" <VarDecl> => StaticVariableDeclaration { declaration: <> },
 }
 
 VarDecl: VariableDeclaration = {
@@ -29,136 +30,71 @@ TypeInstance: TypeInstantiation = {
     TupleInstantiation => TypeInstantiation::Tuple(<>),
     StructInstantiation => TypeInstantiation::Struct(<>),
     EnumInstantiation => TypeInstantiation::Enum(<>),
-    Expr => TypeInstantiation::Expr(<>),
+    Term => TypeInstantiation::Expr(<>),
 }
 
-// pub enum Expression {
-//     // unary-op  = unop, ( ident | literal )
-//     //           | unop, "(", expression, ")" ;
-//     UnOp {
-//         operation: UnOp,
-//         operand: Box<Expression>
-//     },
-//     Ident(String),
-//     // function-call = ident, "(", [ expression ], { ",", expression }, ")" ;
-//     FunctionCall {
-//         name: String,
-//         arguments: Vec<Expression>
-//     },
-// }
-Expr: Expression = {
-    #[precedence(level="0")]
+Term: Expression = {
     Literal => Expression::Literal(<>),
+    "(" <Ident> ")"=> Expression::Ident(<>),
     "(" <Expr> ")" => <>,
-    <o:UnOp> <e:Expr> => Expression::UnOp {
+    FunctionCall => <>,
+}
+
+FunctionCall: Expression = {
+    "{" <s:Ident> "}" "(" <e:Term?> <mut v:("," <Term>)*> ")" => match e {
+        None => Expression::FunctionCall {
+            name: s,
+            arguments: v,
+        },
+        Some(e) => Expression::FunctionCall {
+            name: s,
+            arguments: {
+                v.push(e);
+                v
+            }
+        }
+    }
+    
+}
+
+#[inline]
+Expr: Expression = {
+    <e:Term> <o: UnOp> => Expression::UnOp {
         operation: o,
         operand: Box::new(e),
     },
-    #[precedence(level="1")] #[assoc(side="left")]
-    <e1:Expr> "." <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Access,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    #[precedence(level="2")] #[assoc(side="left")]
-    <e1:Expr> "*" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Mul,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "/" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Div,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "%" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Mod,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "+" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Add,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "-" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Sub,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    #[precedence(level="4")] #[assoc(side="left")]
-    <e1:Expr> "&" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::And,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "|" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Or,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "^" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Xor,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "&&" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::LogAnd,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "||" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::LogOr,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> ">>" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Shr,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "<<" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Shl,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> ">" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Gt,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "<" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Lt,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> ">=" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Geq,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "<=" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Leq,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "==" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Eq,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "!=" <e2:Expr> => Expression::BinOp {
-        operation: BinOp::Neq,
-        left: Box::new(e1),
-        right: Box::new(e2),
-    },
-    <e1:Expr> "->"<e2:Expr> => Expression::BinOp {
-        operation: BinOp::PtrAccess,
+    <e1:Term> <e2:Term> <o: BinOp> => Expression::BinOp {
+        operation: o,
         left: Box::new(e1),
         right: Box::new(e2),
     },
 }
 
+#[inline]
+BinOp: BinOp = {
+    "." => BinOp::Access,
+    "->" => BinOp::PtrAccess,
+    "+" => BinOp::Add,
+    "-" => BinOp::Sub,
+    "*" => BinOp::Mul,
+    "/" => BinOp::Div,
+    "%" => BinOp::Mod,
+    "&" => BinOp::And,
+    "|" => BinOp::Or,
+    "^" => BinOp::Xor,
+    "&&" => BinOp::LogAnd,
+    "||" => BinOp::LogOr,
+    ">>" => BinOp::Shr,
+    "<<" => BinOp::Shl,
+    ">" => BinOp::Gt,
+    "<" => BinOp::Lt,
+    ">=" => BinOp::Geq,
+    "<=" => BinOp::Leq,
+    "==" => BinOp::Eq,
+    "!=" => BinOp::Neq
+}
+
+#[inline]
 UnOp: UnOp = {
     "*" => UnOp::Deref,
     "&" => UnOp::Ref,
@@ -166,7 +102,6 @@ UnOp: UnOp = {
     "--" => UnOp::Dec,
     "~" => UnOp::Not,
     "!" => UnOp::LogNot,
-
 }
 
 // pub enum Literal {
@@ -176,13 +111,13 @@ UnOp: UnOp = {
 // } 
 Literal: Literal = {
     r#""""# => Literal::String(String::new()),
-    Number => Expression::Literal(Literal::Integer { sign: false, num: <> }),
+    Number => Literal::Integer { sign: false, num: <> },
     "true" => Literal::Bool(true),
     "false" => Literal::Bool(false),
 }
 
 EnumInstantiation: EnumInstantiation = {
-    <s:Ident> <t:(":" <TypeInstance>)?> => EnumInstantiation {
+    <s:Ident> <t:("::" <TypeInstance>)?> => EnumInstantiation {
         discriminator: s,
         value: t.map(|x| Box::new(x)),
     },
@@ -291,14 +226,10 @@ ArrayDef: Vec<usize> = {
     ("[" <Number> "]")+ => <>,
 }
 
-// ArraySize: Vec<usize> = {
-//
-// }
-
 // tuple-def = [ type-specifier ], { ",", type-specifier }, ")", ";" ;
 TupleInner: Vec<Type> = {
     <mut v:(<Ty> ",")*> <e:Ty?> => match e {
-    None => v,
+        None => v,
         Some(e) => { v.push(e); v }
     }
 }

@@ -7,7 +7,7 @@ pub enum BinOp {
     PtrAccess,
 //  '+'
     Add,
-//  '_'
+//  '-'
     Sub,
 //  '*'
     Mul,
