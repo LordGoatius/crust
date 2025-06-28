@@ -36,7 +36,9 @@ typedef struct structype** ppstrty;
     );
 
     let file3 = grammar::FileParser::new().parse(
-        "static usize thing = (17 ({ident}($ident, $ident2) $twelve -) +);"
+        "static usize thing = (17 ({ident}($ident, $ident2) $twelve -) +);
+        u32 name(struct ident arg1, u32 thing);
+        u32 name(struct ident arg1, u32 thing) {}"
     );
 
     arr.unwrap();
