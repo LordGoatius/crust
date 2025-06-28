@@ -24,7 +24,23 @@ FunctionDefinition: FunctionDefinition = {
 }
 
 CodeBlock: CodeBlock = {
-    "{" "}" => CodeBlock { code: vec![] }
+    "{" <Statements> "}" => CodeBlock { code: <> }
+}
+
+Statements: Vec<Statement> = {
+    Statement* => <>,
+}
+
+// statement = variable-declaration
+//           | variable-assignment
+//           | shortcut-assignment
+//           | if-statement
+//           | while-statement
+//           | for-statement
+//           | return-statement
+//           | match-statement
+//           | if-let-statement ;
+Statement: Statement = {
 }
 
 FunctionDeclaration: FunctionDeclaration = {
