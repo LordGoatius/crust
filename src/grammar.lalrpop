@@ -11,6 +11,40 @@ pub File: File = {
 Decl: Declaration = {
     CustomTypeDefinition => Declaration::TypeDefinition(<>),
     StaticVarDeclaration => Declaration::StaticVariableDeclaration(<>),
+    FunctionDeclaration => Declaration::FunctionDeclaration(<>),
+}
+
+// function-signature =
+//     type-specifier, ident, "(", [ type-specifier, ident ], { ",", type-specifier, ident }, ")" ;
+//
+// #[derive(Debug)]
+// pub struct FunctionDeclaration {
+//     pub return_type: Type,
+//     pub ident: String,
+//     pub arguments: Vec<(Type, String)>
+// }
+FunctionDeclaration: FunctionDeclaration = {
+    <ret:Ty> <i:Ident> "(" <a:Arguments> ")" => FunctionDeclaration {
+        return_type: ret,
+        ident: i,
+        arguments: a
+    }
+}
+
+Arguments: Vec<(Type, String)> = {
+    <e:FuncArc?> <mut v:("," <FuncArc>)*> => {
+        match e {
+            None => v,
+            Some(e) => {
+                v.push(e);
+                v
+            }
+        }
+    }
+}
+
+FuncArc: (Type, String) = {
+    <(Ty Ident)> => <>,
 }
 
 StaticVarDeclaration: StaticVariableDeclaration = {
@@ -26,16 +60,16 @@ VarDecl: VariableDeclaration = {
 }
 
 TypeInstance: TypeInstantiation = {
+    Term => TypeInstantiation::Expr(<>),
     ArrayInstantiation => TypeInstantiation::Array(<>),
     TupleInstantiation => TypeInstantiation::Tuple(<>),
     StructInstantiation => TypeInstantiation::Struct(<>),
     EnumInstantiation => TypeInstantiation::Enum(<>),
-    Term => TypeInstantiation::Expr(<>),
 }
 
 Term: Expression = {
     Literal => Expression::Literal(<>),
-    "(" <Ident> ")"=> Expression::Ident(<>),
+    "$" <Ident>  => Expression::Ident(<>),
     "(" <Expr> ")" => <>,
     FunctionCall => <>,
 }
