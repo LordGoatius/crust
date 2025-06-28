@@ -14,36 +14,25 @@ lalrpop_mod!(pub grammar);
 
 fn main() {
     let str = "
-struct structype { my_int i32;
-    my_fl f64;
-};
-enum int_opt {
-    some: i32,
-    left: struct ident*,
-    none,
-};
-typedef struct structype** ppstrty;
-";
+    struct structype {
+        my_int i32;
+        my_fl f64;
+    };
+    enum int_opt {
+        some: i32,
+        left: struct ident*,
+        none,
+    };
+    typedef struct structype** ppstrty;
 
-    let arr = grammar::TyParser::new().parse("struct mything[4][5][7]");
+    static i64[7] thing = [1, 2, 4, 5];
+    static <i32, usize> thing;
+    static <struct tup, le> name = <7; 6; 13>;
 
+    u32 name(struct ident arg1, u32 thing);
+    u32 name(struct ident arg1, u32 thing) {}";
     let file = grammar::FileParser::new().parse(str);
 
-    let file2 = grammar::FileParser::new().parse(
-        "static i64[7] thing = [1, 2, 4, 5];
-         static (i32, usize) thing;
-         static (struct tup, le) name = <7; 6; 13>;",
-    );
-
-    let file3 = grammar::FileParser::new().parse(
-        "static usize thing = (17 ({ident}($ident, $ident2) $twelve -) +);
-        u32 name(struct ident arg1, u32 thing);
-        u32 name(struct ident arg1, u32 thing) {}"
-    );
-
-    arr.unwrap();
-    file.unwrap();
-    file2.unwrap();
-    dbg!(file3.unwrap());
+    dbg!(file.unwrap());
     return;
 }

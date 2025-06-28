@@ -1,6 +1,7 @@
 use crate::parser::ast::*;
 use crate::parser::ops::*;
-use std::str::FromStr;
+// use std::str::FromStr;
+use std::collections::VecDeque;
 
 grammar;
 
@@ -31,6 +32,19 @@ Statements: Vec<Statement> = {
     Statement* => <>,
 }
 
+ShortAssign: ShortAssign = {
+     "+=" => ShortAssign::Add,
+     "-=" => ShortAssign::Sub,
+     "*=" => ShortAssign::Mul,
+     "/=" => ShortAssign::Div,
+     "%=" => ShortAssign::Mod,
+     "<<=" => ShortAssign::Shl,
+     ">>=" => ShortAssign::Shr,
+     "&=" => ShortAssign::And,
+     "|=" => ShortAssign::BOr,
+     "^=" => ShortAssign::Xor
+}
+
 // statement = variable-declaration
 //           | variable-assignment
 //           | shortcut-assignment
@@ -41,7 +55,77 @@ Statements: Vec<Statement> = {
 //           | match-statement
 //           | if-let-statement ;
 Statement: Statement = {
+    // Currently, VarDecl covers declaration and assignment
+    VarDecl => Statement::VariableDeclaration(<>),
+    // shortcut-assignment = ident, ( short-assign ), expression, ";" ;
+    <i:Ident> <s:ShortAssign> <t:Term> => Statement::ShortcutAssignment {
+        ident: i,
+        shortcut: s,
+        expr: t
+    },
+    // Control Flow
+    IfStatement => <>,
 }
+
+// // if-statement = "if", "(", expression, ")", "{", code-block-body, "}",
+// //      { "else", "if", "(", expression, ")", "{", code-block-body, "}" },
+// //      [ "else", "{", code-block-body, "}" ] ;
+// IfStatement {
+//     condition: Expression,
+//     code_block: CodeBlock,
+//     else_if: Option<Vec<(Expression, CodeBlock)>>,
+//     else_ex: Option<CodeBlock>
+// },
+#[inline]
+IfStatement: Statement = {
+    "if" <t:Term> "{" <c:CodeBlock> "}" <elif:ElseIfStatement*> <el:ElseStatement?> => {
+        Statement::IfStatement {
+            condition: t,
+            code_block: c,
+            else_if: elif,
+            else_ex: el
+        }
+    }
+}
+
+ElseIfStatement: (Expression, CodeBlock) = {
+    
+}
+
+ElseStatement: CodeBlock = {
+    
+}
+
+// // while-statement = "while", "(", expression, ")", "{", code-block-body, "}" ;
+// WhileStatement {
+//     condition: Expression,
+//     code_block: CodeBlock,
+// },
+// // for-statement   = "for", "(", [ variable-assignment ], ";", 
+// //                               [ expression ],  ";", 
+// //                               [ expression ], ")", "{", code-block-body, "}" ;
+// ForStatement {
+//     initialization: Option<VariableAssignment>,
+//     condition: Expression,
+//     continuation: Expression
+// },
+// // return-statement = "return", expression, ";" ;
+// ReturnStatement {
+//     expr: Expression,
+// },
+// // match-statement  = "match", expression, "{", { match-clause }, "}" ;
+// MatchStatement {
+//     pattern: Expression,
+//     clauses: Vec<MatchClause>
+// },
+// // if-let-statement = "if", "let", type-instantiation, "=" expression, "{", code-block-body, "}"
+// //                  [ "else", "{", code-block-body, "}", ] ;
+// IfLetStatement {
+//     pattern: TypeInstantiation,
+//     matching: Expression,
+//     code_block: CodeBlock,
+//     else_block: Option<CodeBlock>
+// }
 
 FunctionDeclaration: FunctionDeclaration = {
     <ret:Ty> <i:Ident> "(" <a:Arguments> ")" => FunctionDeclaration {
@@ -52,12 +136,13 @@ FunctionDeclaration: FunctionDeclaration = {
 }
 
 Arguments: Vec<(Type, String)> = {
-    <e:FuncArc?> <mut v:("," <FuncArc>)*> => {
+    <e:FuncArc?> <v:("," <FuncArc>)*> => {
         match e {
             None => v,
             Some(e) => {
-                v.push(e);
-                v
+                let mut v: VecDeque<_> = v.into();
+                v.push_front(e);
+                v.into()
             }
         }
     }
@@ -95,7 +180,7 @@ Term: Expression = {
 }
 
 FunctionCall: Expression = {
-    "{" <s:Ident> "}" "(" <e:Term?> <mut v:("," <Term>)*> ")" => match e {
+    "{" <s:Ident> "}" "(" <e:Term?> <v:("," <Term>)*> ")" => match e {
         None => Expression::FunctionCall {
             name: s,
             arguments: v,
@@ -103,8 +188,9 @@ FunctionCall: Expression = {
         Some(e) => Expression::FunctionCall {
             name: s,
             arguments: {
-                v.push(e);
-                v
+                let mut v: VecDeque<_> = v.into();
+                v.push_front(e);
+                v.into()
             }
         }
     }
@@ -187,10 +273,11 @@ TupleInstantiation : TupleInstantiation = {
     "<" <n:TypeInstance> <v:(";" <TypeInstance>)+?> ">" => {
         match v {
             None => TupleInstantiation { values: vec![n] },
-            Some(mut v) => {
-                v.push(n);
+            Some(v) => {
+                let mut v: VecDeque<_> = v.into();
+                v.push_front(n);
                 TupleInstantiation {
-                    values: v                    
+                    values: v.into()
                 }
             },
         }
@@ -201,10 +288,11 @@ ArrayInstantiation: ArrayInstantiation = {
     "[" <n:TypeInstance> <v:("," <TypeInstance>)+?> "]" => {
         match v {
             None => ArrayInstantiation { values: vec![n] },
-            Some(mut v) => {
-                v.push(n);
+            Some(v) => {
+                let mut v: VecDeque<_> = v.into();
+                v.push_front(n);
                 ArrayInstantiation {
-                    values: v                    
+                    values: v.into()  
                 }
             },
         }
@@ -238,9 +326,9 @@ ColonType: Type = {
     ":" <Ty> => <>,
 }
 
-pub Ty: Type = {
+Ty: Type = {
     NonArrType => <>,
-    "(" <v:TupleInner> ")" => Type::Tuple(v),
+    "<" <v:TupleInner> ">" => Type::Tuple(v),
     <t:NonArrType> <a:ArrayDef> => Type::Array(Box::new(t), a),
     // Note: For Typedef
 }
@@ -284,13 +372,16 @@ ArrayDef: Vec<usize> = {
 TupleInner: Vec<Type> = {
     <mut v:(<Ty> ",")*> <e:Ty?> => match e {
         None => v,
-        Some(e) => { v.push(e); v }
+        Some(e) => {
+            v.push(e);
+            v
+        }
     }
 }
 
 Ident: String = <s:r"[_a-zA-Z][_a-zA-Z0-9]*"> => s.to_owned();
 // Fix Later Number: usize = <s:r"(?:(?:0b[01][01_]+)|(?:0o[0-7][0-7_]+)|(?:0x[0-9a-fA-F][0-9a-fA-F_]+)|(?:[0-9][0-9_]+))"> => s.parse().expect("Invalid integer literal");
-pub Number: usize = <s:r"[0-9][0-9_]*"> => s.chars()
+Number: usize = <s:r"[0-9][0-9_]*"> => s.chars()
     .filter(|&c| char::is_numeric(c))
     .collect::<String>()
     .parse()

@@ -289,7 +289,7 @@ pub enum Statement {
     IfStatement {
         condition: Expression,
         code_block: CodeBlock,
-        else_if: Option<Vec<(Expression, CodeBlock)>>,
+        else_if: Vec<(Expression, CodeBlock)>,
         else_ex: Option<CodeBlock>
     },
     // while-statement = "while", "(", expression, ")", "{", code-block-body, "}" ;
