@@ -275,6 +275,7 @@ pub struct VariableAssignment {
 //           | if-let-statement ;
 #[derive(Debug)]
 pub enum Statement {
+    Expr(Expression),
     VariableDeclaration(VariableDeclaration),
     VariableAssignment(VariableAssignment),
     // shortcut-assignment = ident, ( short-assign ), expression, ";" ;
@@ -302,8 +303,9 @@ pub enum Statement {
     //                               [ expression ], ")", "{", code-block-body, "}" ;
     ForStatement {
         initialization: Option<VariableAssignment>,
-        condition: Expression,
-        continuation: Expression
+        condition: Option<Expression>,
+        continuation: Option<Expression>,
+        code: CodeBlock,
     },
     // return-statement = "return", expression, ";" ;
     ReturnStatement {
@@ -327,6 +329,6 @@ pub enum Statement {
 // match-clause     = type-instantiation, ":", "{", code-block-body, "}", "," ;
 #[derive(Debug)]
 pub struct MatchClause {
-    pattern: TypeInstantiation,
-    code: CodeBlock
+    pub pattern: TypeInstantiation,
+    pub code: CodeBlock
 }

@@ -56,29 +56,38 @@ ShortAssign: ShortAssign = {
 //           | if-let-statement ;
 Statement: Statement = {
     // Currently, VarDecl covers declaration and assignment
-    VarDecl => Statement::VariableDeclaration(<>),
+    <VarDecl> ";" => Statement::VariableDeclaration(<>),
+    <VarAssign> ";" => Statement::VariableAssignment(<>),
     // shortcut-assignment = ident, ( short-assign ), expression, ";" ;
-    <i:Ident> <s:ShortAssign> <t:Term> => Statement::ShortcutAssignment {
+    <i:Ident> <s:ShortAssign> <t:Term> ";" => Statement::ShortcutAssignment {
         ident: i,
         shortcut: s,
         expr: t
     },
     // Control Flow
     IfStatement => <>,
+   // while-statement = "while", "(", expression, ")", "{", code-block-body, "}" ;
+    WhileStatement => <>,
+    ForStatement => <>,
+    <Term> ";" => Statement::Expr(<>),
+    MatchStatement => <>,
+    // return-statement = "return", expression, ";" ;
+    "return" <expr:Term> ";" => Statement::ReturnStatement {<>}
 }
 
-// // if-statement = "if", "(", expression, ")", "{", code-block-body, "}",
-// //      { "else", "if", "(", expression, ")", "{", code-block-body, "}" },
-// //      [ "else", "{", code-block-body, "}" ] ;
-// IfStatement {
-//     condition: Expression,
-//     code_block: CodeBlock,
-//     else_if: Option<Vec<(Expression, CodeBlock)>>,
-//     else_ex: Option<CodeBlock>
-// },
+#[inline]
+VarAssign: VariableAssignment = {
+    <ident:Ident> "=" <expr:Term> => VariableAssignment {
+        <>
+    }, 
+}
+
+// if-statement = "if", "(", expression, ")", "{", code-block-body, "}",
+//      { "else", "if", "(", expression, ")", "{", code-block-body, "}" },
+//      [ "else", "{", code-block-body, "}" ] ;
 #[inline]
 IfStatement: Statement = {
-    "if" <t:Term> "{" <c:CodeBlock> "}" <elif:ElseIfStatement*> <el:ElseStatement?> => {
+    "if" <t:Term> <c:CodeBlock> <elif:ElseIfStatement*> <el:ElseStatement?> => {
         Statement::IfStatement {
             condition: t,
             code_block: c,
@@ -89,43 +98,59 @@ IfStatement: Statement = {
 }
 
 ElseIfStatement: (Expression, CodeBlock) = {
-    
+    "else" "if" <t:Term> <c:CodeBlock> => (t, c),
 }
 
 ElseStatement: CodeBlock = {
-    
+    "else" <CodeBlock> => <>,
 }
 
-// // while-statement = "while", "(", expression, ")", "{", code-block-body, "}" ;
-// WhileStatement {
-//     condition: Expression,
-//     code_block: CodeBlock,
-// },
-// // for-statement   = "for", "(", [ variable-assignment ], ";", 
-// //                               [ expression ],  ";", 
-// //                               [ expression ], ")", "{", code-block-body, "}" ;
-// ForStatement {
-//     initialization: Option<VariableAssignment>,
-//     condition: Expression,
-//     continuation: Expression
-// },
-// // return-statement = "return", expression, ";" ;
-// ReturnStatement {
-//     expr: Expression,
-// },
-// // match-statement  = "match", expression, "{", { match-clause }, "}" ;
-// MatchStatement {
-//     pattern: Expression,
-//     clauses: Vec<MatchClause>
-// },
-// // if-let-statement = "if", "let", type-instantiation, "=" expression, "{", code-block-body, "}"
-// //                  [ "else", "{", code-block-body, "}", ] ;
-// IfLetStatement {
-//     pattern: TypeInstantiation,
-//     matching: Expression,
-//     code_block: CodeBlock,
-//     else_block: Option<CodeBlock>
-// }
+WhileStatement: Statement = {
+    "while" <condition:Term> <code_block:CodeBlock> => Statement::WhileStatement {<>},
+}
+
+// for-statement   = "for", "(", [ variable-assignment ], ";", 
+//                               [ expression ],  ";", 
+//                               [ expression ], ")", "{", code-block-body, "}" ;
+ForStatement: Statement = {
+    "for" "(" <t1:VarAssign?> ";" <t2:Term?> ";" <t3:Term?> ")" <c:CodeBlock> => {
+        Statement::ForStatement {
+            initialization: t1,
+            condition: t2,
+            continuation: t3,
+            code: c
+        }
+    }
+}
+
+// match-statement  = "match", expression, "{", { match-clause }, "}" ;
+MatchStatement: Statement = {
+    "match" <t:Term> "{" <v:MatchClause*> "}" => Statement::MatchStatement{
+        pattern: t,
+        clauses: v,
+    }
+}
+
+// match-clause     = type-instantiation, ":", "{", code-block-body, "}", "," ;
+MatchClause: MatchClause = {
+    <t:TypeInstance> ":" <c:CodeBlock> "," => MatchClause {
+        pattern: t,
+        code: c
+    }
+}
+
+// if-let-statement = "if", "let", type-instantiation, "=" expression, "{", code-block-body, "}"
+//                  [ "else", "{", code-block-body, "}", ] ;
+IfLet: Statement = {
+    "if" "let" <t:TypeInstance> "=" <e:Term> <c:CodeBlock> <el:ElseStatement?> => {
+        Statement::IfLetStatement {
+            pattern: t,
+            matching: e,
+            code_block: c,
+            else_block: el,
+        }
+    }
+}
 
 FunctionDeclaration: FunctionDeclaration = {
     <ret:Ty> <i:Ident> "(" <a:Arguments> ")" => FunctionDeclaration {
