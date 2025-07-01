@@ -1,6 +1,7 @@
 #![feature(stmt_expr_attributes)]
 // pub mod lexer;
 pub mod parser;
+pub mod ssa;
 
 // use ilex::token::Cursor;
 // use ilex::Spanned;
