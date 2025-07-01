@@ -1,6 +1,7 @@
 #![expect(unused_imports)]
 #![expect(dead_code)]
 use std::collections::HashSet;
+use std::hash::Hash;
 use crate::parser::{ast::{}, ops::{BinOp, UnOp}};
 
 pub mod cfg;
@@ -41,6 +42,16 @@ pub struct Variable(String);
 
 pub struct StaticValue(Variable, u64, Type);
 
+// A function is a named section of code with specifc call/return requirements.
+// These requirements are handled during ir lowering to machine code.
+pub struct Function {
+    name: String,
+    label: Label,
+    ret: Type,
+    args: Vec<StaticValue>,
+    blocks: HashSet<CodeBlock>,
+}
+
 pub enum Condition {
     Ne,
     Eq,
@@ -52,20 +63,24 @@ pub enum Condition {
 
 pub enum Instr {
     Quad {
-        v: Variable,
+        v: StaticValue,
         op: BinOp,
-        a1: Variable,
-        a2: Variable,
+        a1: StaticValue,
+        a2: StaticValue,
     },
     Triple {
-        v: Variable,
+        v: StaticValue,
         op: UnOp,
-        a: Variable,
+        a: StaticValue,
     },
+    Call(StaticValue, Function),
+    Return(Option<StaticValue>),
+    Alloca(StaticValue, Type),
     Br(Condition, Label),
-    Phi(Variable, Vec<Variable>),
+    Phi(StaticValue, Vec<StaticValue>),
 }
 
 pub struct CodeBlock {
+    label: Label,
     instrs: Vec<Instr>,
 }
